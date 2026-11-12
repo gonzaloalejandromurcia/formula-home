@@ -274,3 +274,18 @@ footer{ padding:44px 0 30px; }
 .review{ border-top:1px solid var(--line); padding:12px 0; font-size:14px; } .review .who{ font-weight:600; } .review .rt{ color:#facc15; }
 .host-card .thumb-card{ width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:10px; }
 .fh-acct{ white-space:nowrap; }
+
+/* checkbox chips (rules / amenities) */
+.chip-grid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+.chip-check{ position:relative; cursor:pointer; }
+.chip-check input{ position:absolute; opacity:0; pointer-events:none; }
+.chip-check span.chip{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--line); border-radius:999px; font-size:14px; background:var(--panel); color:var(--muted,#a1a1aa); transition:.12s; user-select:none; }
+.chip-check input:checked + span.chip{ border-color:var(--red,#e20a16); background:rgba(226,10,22,.14); color:#fff; }
+.chip-check input:focus-visible + span.chip{ outline:2px solid var(--red,#e20a16); outline-offset:2px; }
+.chip-check .ft-ic{ font-size:17px; line-height:1; }
+.ft-chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 13px; margin:0 8px 8px 0; border:1px solid var(--line); border-radius:999px; font-size:14px; }
+.ft-ic{ font-size:16px; line-height:1; }
+
+/* host form map picker */
+#map-picker{ height:360px; border-radius:12px; border:1px solid var(--line-strong); overflow:hidden; margin-top:6px; background:#111; }
+.map-hint{ font-size:13px; color:var(--muted,#a1a1aa); margin-top:8px; }

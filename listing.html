@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/leaflet/leaflet.css" />
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -86,7 +86,7 @@
   </div>
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/leaflet/leaflet.js"></script>
 <script src="assets/supabase.js"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/i18n-platform.js"></script>
@@ -147,7 +147,8 @@ function render(){
     '<div class="ls-grid"><div>' +
       '<div class="panel"><h3>' + FH.esc(t('p.ls.about')) + '</h3><p style="white-space:pre-line;font-size:14.5px">' + FH.esc(H.description || '') + '</p>' +
         '<p class="muted" style="margin-top:12px">' + (H.capacity ? FH.esc(t('p.ls.capacity', { n: H.capacity })) : '') + (H.min_nights > 1 ? ' · ' + FH.esc(t('p.ls.minNights', { n: H.min_nights })) : '') + '</p></div>' +
-      (H.house_rules ? '<div class="panel"><h3>' + FH.esc(t('p.ls.rules')) + '</h3><p style="white-space:pre-line;font-size:14.5px">' + FH.esc(H.house_rules) + '</p></div>' : '') +
+      ((H.amenities || []).length ? '<div class="panel"><h3>' + FH.esc(t('p.ls.amenities')) + '</h3><div>' + FH.featureChips(H.amenities, FH.AMENITIES) + '</div></div>' : '') +
+      (((H.rules || []).length || H.house_rules) ? '<div class="panel"><h3>' + FH.esc(t('p.ls.rules')) + '</h3><div>' + FH.featureChips(H.rules, FH.RULES) + '</div>' + (H.house_rules ? '<p style="white-space:pre-line;font-size:14.5px;margin-top:6px">' + FH.esc(H.house_rules) + '</p>' : '') + '</div>' : '') +
       '<div class="panel"><div id="ls-map"></div></div>' +
       '<div class="panel"><h3>' + FH.esc(t('p.ls.reviews')) + '</h3><div id="reviews"></div></div>' +
     '</div><div><div class="panel book-box"><div class="price-big">' + FH.esc(FH.money(H.price_per_night || 0, H.currency)) + '<span class="muted" style="font-size:14px">' + FH.esc(t('p.ls.perNight')) + '</span></div>' + busyTxt + '<div style="margin-top:14px">' + bookBox + '</div></div></div></div>';

@@ -145,8 +145,16 @@ const FH = (function(){
   }
 
   // columns safe to read publicly from listings (never contact data)
-  const LISTING_COLS = 'id, created_at, name, title, city, country, circuit, lat, lng, price_per_night, currency, capacity, description, house_rules, min_nights, photo_urls, owner_id, status';
+  const LISTING_COLS = 'id, created_at, name, title, city, country, circuit, lat, lng, price_per_night, currency, capacity, description, house_rules, rules, amenities, min_nights, photo_urls, owner_id, status';
 
+
+  // simple checkbox options for hosts (key, icon). Labels live in i18n as 'ft.<key>'
+  const RULES = [['no_smoking','🚭'],['no_pets','🐾'],['no_parties','🎉'],['quiet_hours','🌙'],['no_extra_guests','👥'],['shoes_off','👟']];
+  const AMENITIES = [['parking','🚗'],['pets_ok','🐶'],['wifi','📶'],['ac','❄️'],['kitchen','🍳'],['washer','🧺'],['tv','📺'],['breakfast','☕'],['pool','🏊'],['shuttle','🚌'],['near_circuit','🏁'],['private_bath','🚿']];
+  function featureChips(keys, defs){
+    const set = new Set(keys || []);
+    return defs.filter(d => set.has(d[0])).map(d => '<span class="ft-chip"><span class="ft-ic">' + d[1] + '</span>' + esc(window.t ? window.t('ft.' + d[0]) : d[0]) + '</span>').join('');
+  }
 
   // contact details as safe HTML (method/value of a host, or email/phone of a guest)
   function contactHtml(c){
@@ -166,5 +174,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS };
+  return { initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips };
 })();

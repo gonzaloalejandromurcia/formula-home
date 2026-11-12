@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/leaflet/leaflet.css" />
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -109,7 +109,9 @@
         <div class="field-group"><label data-i18n="p.reg.minNights">Minimum nights</label><input type="number" name="min_nights" min="1" max="30" step="1" required value="1" /></div>
       </div>
       <div class="field-group"><label data-i18n="host.description">Description</label><textarea name="description" rows="5" maxlength="3000" required></textarea></div>
-      <div class="field-group"><label data-i18n="p.reg.rules">House rules</label><textarea name="house_rules" rows="3" maxlength="1500" data-i18n-placeholder="p.reg.rulesPh"></textarea></div>
+      <div class="field-group"><label data-i18n="p.reg.amenPick">What you offer</label><div class="chip-grid" id="amen-grid"></div></div>
+      <div class="field-group"><label data-i18n="p.reg.rulesPick">House rules</label><div class="chip-grid" id="rules-grid"></div></div>
+      <div class="field-group"><label data-i18n="p.reg.rulesOther">Anything else? (optional)</label><textarea name="house_rules" rows="2" maxlength="1500" data-i18n-placeholder="p.reg.rulesPh"></textarea></div>
       <p class="muted" style="margin:6px 0 14px" data-i18n="p.reg.privateNote"></p>
       <div class="field-group"><label data-i18n="host.contactMethod">Preferred contact method</label>
         <div class="radio-row" id="contact-method-group">
@@ -134,7 +136,7 @@
   </div>
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/leaflet/leaflet.js"></script>
 <script src="assets/supabase.js"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/i18n-platform.js"></script>
@@ -198,6 +200,13 @@ document.getElementById('photo-input').addEventListener('change', e => {
   e.target.value = ''; renderPhotos();
 });
 
+function renderChips(id, defs, name){
+  document.getElementById(id).innerHTML = defs.map(d => '<label class="chip-check"><input type="checkbox" name="' + name + '" value="' + d[0] + '"><span class="chip"><span class="ft-ic">' + d[1] + '</span><span data-i18n="ft.' + d[0] + '"></span></span></label>').join('');
+}
+renderChips('amen-grid', FH.AMENITIES, 'amenities'); renderChips('rules-grid', FH.RULES, 'rules');
+function pickedChips(name){ return [...document.querySelectorAll('input[name=' + name + ']:checked')].map(i => i.value); }
+function setChips(name, arr){ const set = new Set(arr || []); document.querySelectorAll('input[name=' + name + ']').forEach(i => { i.checked = set.has(i.value); }); }
+
 (async () => {
   ME = await FH.user();
   if(!ME){ location.href = 'auth.html?next=' + encodeURIComponent('host-register.html' + location.search); return; }
@@ -211,7 +220,7 @@ document.getElementById('photo-input').addEventListener('change', e => {
     document.getElementById('submit-btn').setAttribute('data-i18n', 'p.reg.submitEdit');
     f.title.value = data.title || ''; f.city.value = data.city || ''; f.country.value = data.country || '';
     f.price.value = data.price_per_night || ''; f.currency.value = data.currency || 'USD'; f.capacity.value = data.capacity || 2; f.min_nights.value = data.min_nights || 1;
-    f.description.value = data.description || ''; f.house_rules.value = data.house_rules || '';
+    f.description.value = data.description || ''; f.house_rules.value = data.house_rules || ''; setChips('amenities', data.amenities); setChips('rules', data.rules);
     if(![...circuitSelect.options].some(o => o.value === data.circuit)){ const o = document.createElement('option'); o.value = data.circuit; o.textContent = data.circuit; circuitSelect.appendChild(o); }
     circuitSelect.value = data.circuit;
     setMarker(data.lat, data.lng); map.setView([data.lat, data.lng], 12); hint = { kind: 'pin', lat: data.lat, lng: data.lng }; updateHint();
@@ -250,7 +259,7 @@ document.getElementById('host-form').addEventListener('submit', async (e) => {
       title: f.title.value.trim(), city: f.city.value.trim(), country: f.country.value.trim() || null, circuit: f.circuit.value,
       lat: pos.lat, lng: pos.lng, price_per_night: parseFloat(f.price.value), currency: f.currency.value,
       capacity: parseInt(f.capacity.value, 10), min_nights: parseInt(f.min_nights.value, 10),
-      description: f.description.value.trim(), house_rules: f.house_rules.value.trim() || null, photo_urls: urls
+      description: f.description.value.trim(), house_rules: f.house_rules.value.trim() || null, rules: pickedChips('rules'), amenities: pickedChips('amenities'), photo_urls: urls
     };
     const priv = { contact_method: f.contact_method.value, contact_value: f.contact_value.value.trim(), phone: f.phone.value.trim() || null, email: ME.email || null };
     let hostId = EDIT_ID;
