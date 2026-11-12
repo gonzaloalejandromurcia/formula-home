@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Race calendar | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .cal-page{ padding:36px 0 70px; }
+  .cal-head h1{ font-size:clamp(30px,4vw,44px); }
+  .cal-head p{ color:var(--steel); margin-top:12px; max-width:500px; font-size:14.5px; }
+  .series-filters{ display:flex; gap:10px; flex-wrap:wrap; margin:26px 0 32px; }
+  .series-pill{
+    padding:9px 18px; border-radius:999px; border:1px solid var(--line-strong);
+    font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:12.5px;
+    text-transform:uppercase; letter-spacing:0.03em; background:transparent; color:#fff;
+  }
+  .series-pill.active{ background:var(--red); border-color:var(--red); }
+  .race-grid{ display:grid; grid-template-columns:1fr; gap:14px; }
+  @media(min-width:640px){ .race-grid{ grid-template-columns:1fr 1fr; } }
+  @media(min-width:980px){ .race-grid{ grid-template-columns:1fr 1fr 1fr; } }
+  .race-card{
+    border:1px solid var(--line-strong); border-radius:10px; padding:20px;
+    display:flex; flex-direction:column; gap:12px; position:relative; overflow:hidden;
+  }
+  .race-card.next{ border-color:var(--red); }
+  .race-card .next-tag{
+    position:absolute; top:0; right:0; background:var(--red); font-size:10px; font-weight:700;
+    letter-spacing:0.08em; text-transform:uppercase; padding:5px 10px; border-radius:0 0 0 8px;
+  }
+  .race-card .date{ font-family:'Oswald',sans-serif; color:var(--red); font-size:12.5px; letter-spacing:0.04em; }
+  .race-card h3{ font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:19px; text-transform:uppercase; margin-top:2px; }
+  .race-card .loc{ color:var(--steel); font-size:12.5px; }
+  .race-card .badges{ display:flex; gap:6px; margin-top:2px; }
+  .badge{ font-size:10px; font-weight:700; letter-spacing:0.05em; padding:3px 8px; border-radius:5px; border:1px solid var(--line-strong); color:var(--steel); }
+  .badge.on{ color:#fff; border-color:var(--red); background:rgba(227,21,31,0.15); }
+  .race-card .plan-btn{
+    margin-top:6px; display:inline-flex; align-items:center; gap:6px; align-self:flex-start;
+    font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:12.5px;
+    color:var(--red); text-transform:uppercase;
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" class="active-link" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+      <a href="host-register.html" class="btn btn-small" data-i18n="nav.becomeHost">Become a host</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap cal-page">
+  <div class="cal-head">
+    <span class="eyebrow"><span class="dot"></span><span data-i18n="cal.eyebrow">2026 season</span></span>
+    <h1 class="headline" style="margin-top:14px;" data-i18n="cal.title">Race calendar</h1>
+    <p data-i18n="cal.sub">Every F1, F2 and F3 weekend for the season. Pick a race to see how to get there and where to stay. Dates can shift — always confirm with the official series site before booking travel.</p>
+  </div>
+  <div class="series-filters" id="series-filters">
+    <button class="series-pill active" data-series="ALL" data-i18n="cal.all">All series</button>
+    <button class="series-pill" data-series="F1">Formula 1</button>
+    <button class="series-pill" data-series="F2">Formula 2</button>
+    <button class="series-pill" data-series="F3">Formula 3</button>
+  </div>
+  <div class="race-grid" id="race-grid"></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  document.getElementById('burger').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  const today = new Date();
+  const upcoming = RACES.filter(r => new Date(r.end) >= today).sort((a,b)=> new Date(a.start)-new Date(b.start));
+  const nextId = upcoming.length ? upcoming[0].id : null;
+
+  function fmtDate(start, end){
+    const s = new Date(start), e = new Date(end);
+    const opts = { month:'short', day:'numeric' };
+    const sameMonth = s.getMonth() === e.getMonth();
+    return sameMonth
+      ? `${s.toLocaleDateString('en-US',{month:'short'})} ${s.getDate()}–${e.getDate()}`
+      : `${s.toLocaleDateString('en-US',opts)} – ${e.toLocaleDateString('en-US',opts)}`;
+  }
+
+  function render(filter){
+    const grid = document.getElementById('race-grid');
+    const list = RACES
+      .filter(r => filter === 'ALL' || r.series.includes(filter))
+      .sort((a,b)=> new Date(a.start)-new Date(b.start));
+
+    grid.innerHTML = list.map(r => `
+      <div class="race-card ${r.id===nextId?'next':''}">
+        ${r.id===nextId ? `<span class="next-tag">${t('cal.next')}</span>` : ''}
+        <div class="date">${fmtDate(r.start, r.end)}</div>
+        <h3>${r.name}</h3>
+        <div class="loc">${r.city}, ${r.country} · ${r.circuit}</div>
+        <div class="badges">
+          <span class="badge ${r.series.includes('F1')?'on':''}">F1</span>
+          <span class="badge ${r.series.includes('F2')?'on':''}">F2</span>
+          <span class="badge ${r.series.includes('F3')?'on':''}">F3</span>
+        </div>
+        <a class="plan-btn" href="plan.html?race=${r.id}">${t('cal.plan')}</a>
+      </div>
+    `).join('');
+  }
+
+  render('ALL');
+
+  document.querySelectorAll('.series-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.series-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render(btn.dataset.series);
+    });
+  });
+
+  // language + currency (desktop + mobile controls kept in sync)
+  FH.initNav();
+  function onLangChange(){
+    applyI18n();
+    const activeBtn = document.querySelector('.series-pill.active');
+    render(activeBtn ? activeBtn.dataset.series : 'ALL');
+  }
+  applyI18n();
+  const langSelects = [document.getElementById('lang-select'), document.getElementById('lang-select-mobile')].filter(Boolean);
+  const currencySelects = [document.getElementById('currency-select'), document.getElementById('currency-select-mobile')].filter(Boolean);
+  langSelects.forEach(sel => { sel.value = getLang(); sel.addEventListener('change', () => {
+    setLang(sel.value);
+    langSelects.forEach(s => s.value = sel.value);
+    onLangChange();
+  }); });
+  currencySelects.forEach(sel => { sel.value = getDisplayCurrency(); sel.addEventListener('change', () => {
+    setDisplayCurrency(sel.value);
+    currencySelects.forEach(s => s.value = sel.value);
+  }); });
+</script>
+
+</body>
+</html>

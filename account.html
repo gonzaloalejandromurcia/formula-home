@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>My account | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap form-page">
+
+  <div class="form-head">
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="p.acc.title">My account</span></div>
+    <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;" data-i18n="p.acc.title">My account</h1>
+  </div>
+  <div class="panel">
+    <h3 data-i18n="p.acc.profile">Profile</h3>
+    <form id="profile-form" novalidate>
+      <div class="field-group"><label data-i18n="p.acc.verifyEmail">Email</label><input type="text" id="acc-email" disabled /></div>
+      <div class="field-row">
+        <div class="field-group"><label data-i18n="p.acc.name">Full name</label><input type="text" name="full_name" maxlength="80" /></div>
+        <div class="field-group"><label data-i18n="p.acc.phone">Phone</label><input type="tel" name="phone" maxlength="30" /></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-small" type="submit" data-i18n="p.acc.save">Save changes</button>
+        <a class="btn btn-ghost btn-small" href="host-dashboard.html" data-i18n="p.acc.toHostPanel">Go to host panel</a>
+        <button class="btn btn-ghost btn-small" type="button" id="logout-btn" data-i18n="p.acc.logout">Log out</button>
+      </div>
+      <div class="status-msg" id="profile-msg" role="status"></div>
+    </form>
+  </div>
+  <div class="panel" id="trips-panel">
+    <h3 data-i18n="p.acc.trips">My trips</h3>
+    <div id="trips"></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+
+FH.wire();
+const sb = FH.sb;
+let ME = null, TRIPS = [], REVIEWED = new Set();
+
+window.onLangChange = () => { renderTrips(); };
+
+(async () => {
+  ME = await FH.requireAuth(); if(!ME) return;
+  document.getElementById('acc-email').value = ME.email || '';
+  const p = await FH.profile();
+  const f = document.getElementById('profile-form');
+  f.full_name.value = (p && p.full_name) || ''; f.phone.value = (p && p.phone) || '';
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { error } = await sb.from('profiles').update({ full_name: f.full_name.value.trim(), phone: f.phone.value.trim() || null }).eq('id', ME.id);
+    FH.toast(document.getElementById('profile-msg'), error ? FH.errText(error) : t('p.acc.saved'), !error);
+  });
+  document.getElementById('logout-btn').addEventListener('click', async () => { await sb.auth.signOut(); location.href = 'index.html'; });
+  await loadTrips();
+  if(location.hash === '#trips') document.getElementById('trips-panel').scrollIntoView();
+})();
+
+async function loadTrips(){
+  const { data, error } = await sb.from('bookings')
+    .select('id, host_id, check_in, check_out, nights, guests, message, total, currency, status, created_at, hosts(title, city, country, circuit, name)')
+    .eq('guest_id', ME.id).order('check_in', { ascending: false });
+  const box = document.getElementById('trips');
+  if(error){ box.textContent = FH.errText(error); return; }
+  TRIPS = data || [];
+  const r = await sb.from('reviews').select('booking_id').eq('guest_id', ME.id);
+  REVIEWED = new Set((r.data || []).map(x => x.booking_id));
+  renderTrips();
+}
+
+function renderTrips(){
+  const box = document.getElementById('trips'); if(!box || !ME) return;
+  if(!TRIPS.length){
+    box.innerHTML = '<p class="muted">' + FH.esc(t('p.acc.noTrips')) + '</p><div class="btn-row"><a class="btn btn-small" href="search.html">' + FH.esc(t('p.acc.findStay')) + '</a></div>';
+    return;
+  }
+  const today = FH.today();
+  box.innerHTML = TRIPS.map(b => {
+    const h = b.hosts;
+    const title = h ? (h.title || (h.city + (h.circuit ? ' · ' + h.circuit : ''))) : t('p.acc.unavailableListing');
+    const canCancel = (b.status === 'requested' || b.status === 'accepted') && b.check_in >= today;
+    const canReview = b.status === 'accepted' && b.check_out <= today && !REVIEWED.has(b.id);
+    const canChat = (b.status === 'requested' || b.status === 'accepted');
+    return '<div class="item" data-id="' + b.id + '">' +
+      '<div class="item-top"><div>' +
+        '<h4>' + (h ? '<a href="listing.html?id=' + b.host_id + '" style="text-decoration:underline">' + FH.esc(title) + '</a>' : FH.esc(title)) + '</h4>' +
+        '<div class="sub">' + FH.esc(FH.fmtD(b.check_in)) + ' → ' + FH.esc(FH.fmtD(b.check_out)) + ' · ' + b.nights + ' ' + FH.esc(t('p.acc.nights')) + ' · ' + b.guests + ' ' + FH.esc(t('p.acc.guests')) + '</div>' +
+        '<div class="sub">' + FH.esc(t('p.acc.total')) + ': <b>' + FH.esc(FH.money(b.total, b.currency)) + '</b></div>' +
+      '</div>' + FH.badge(b.status) + '</div>' +
+      (b.message ? '<div class="msg">' + FH.esc(b.message) + '</div>' : '') +
+      (b.status === 'accepted' ? '<div class="sub" style="margin-top:8px">' + FH.esc(t('p.acc.payNote')) + '</div>' : '') +
+      '<div class="contact-box" hidden></div>' +
+      '<div class="btn-row">' +
+        (b.status === 'accepted' ? '<button class="btn btn-ghost btn-small" data-act="contact">' + FH.esc(t('p.acc.contact')) + '</button>' : '') +
+        (canChat ? '<button class="btn btn-ghost btn-small" data-act="msgs">' + FH.esc(t('p.acc.messages')) + '</button>' : '') +
+        (canReview ? '<button class="btn btn-ghost btn-small" data-act="review">' + FH.esc(t('p.acc.review')) + '</button>' : '') +
+        (canCancel ? '<button class="btn btn-danger btn-small" data-act="cancel">' + FH.esc(t('p.acc.cancel')) + '</button>' : '') +
+      '</div>' +
+      '<div class="thread-box" hidden></div><div class="review-box" hidden></div><div class="status-msg"></div></div>';
+  }).join('');
+}
+
+document.getElementById('trips').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  const item = b.closest('.item'), id = item.dataset.id, st = item.querySelector('.status-msg'), act = b.dataset.act;
+  if(act === 'cancel'){
+    if(!confirm(t('p.acc.cancelConfirm'))) return;
+    const { error } = await sb.rpc('cancel_booking', { p_booking: id });
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    await loadTrips();
+  } else if(act === 'contact'){
+    const box = item.querySelector('.contact-box');
+    if(!box.hidden){ box.hidden = true; return; }
+    const { data, error } = await sb.rpc('booking_contact', { p_booking: id });
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    box.innerHTML = FH.contactHtml(data); box.hidden = false;
+  } else if(act === 'msgs'){
+    const box = item.querySelector('.thread-box');
+    if(!box.hidden){ box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false; FH.thread(box, id, true);
+  } else if(act === 'review'){
+    const box = item.querySelector('.review-box');
+    if(!box.hidden){ box.hidden = true; return; }
+    box.hidden = false; let rating = 0;
+    box.innerHTML = '<div class="field-group"><label>' + FH.esc(t('p.acc.rating')) + '</label><div class="stars">' + [1,2,3,4,5].map(n => '<button type="button" data-n="' + n + '" aria-label="' + n + '">★</button>').join('') + '</div></div>' +
+      '<div class="field-group"><textarea rows="3" maxlength="1000" placeholder="' + FH.esc(t('p.acc.reviewPh')) + '"></textarea></div>' +
+      '<button class="btn btn-small" type="button" data-send>' + FH.esc(t('p.acc.sendReview')) + '</button>';
+    const stars = box.querySelectorAll('.stars button');
+    stars.forEach(s => s.addEventListener('click', () => { rating = +s.dataset.n; stars.forEach(x => x.classList.toggle('on', +x.dataset.n <= rating)); }));
+    box.querySelector('[data-send]').addEventListener('click', async () => {
+      const { error } = await sb.rpc('submit_review', { p_booking: id, p_rating: rating || null, p_comment: box.querySelector('textarea').value });
+      if(error){ FH.toast(st, FH.errText(error), false); return; }
+      REVIEWED.add(id); await loadTrips();
+    });
+  }
+});
+
+</script>
+</body>
+</html>

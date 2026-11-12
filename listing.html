@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Listing | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap form-page">
+
+  <div id="ls-root"><p class="muted" data-i18n="search.loadingResultsMap">Loading…</p></div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+
+FH.wire();
+const sb = FH.sb;
+const ID = new URLSearchParams(location.search).get('id');
+let H = null, BUSY = [], ME = null, mapObj = null;
+window.onLangChange = () => { if(H) render(); };
+window.onCurrencyChange = () => { updateTotal(); };
+
+(async () => {
+  const root = document.getElementById('ls-root');
+  if(!ID || !/^[0-9a-f-]{36}$/i.test(ID)){ root.innerHTML = '<p class="muted">' + FH.esc(t('p.ls.notFound')) + '</p>'; return; }
+  ME = await FH.user();
+  const { data, error } = await sb.from('hosts').select(FH.LISTING_COLS).eq('id', ID).maybeSingle();
+  if(error || !data || (data.status !== 'approved' && !(ME && data.owner_id === ME.id))){ root.innerHTML = '<p class="muted">' + FH.esc(t('p.ls.notFound')) + '</p>'; return; }
+  H = data;
+  const busy = await sb.rpc('host_busy_dates', { p_host: ID });
+  BUSY = busy.data || [];
+  render();
+  loadReviews();
+})();
+
+function render(){
+  const root = document.getElementById('ls-root');
+  const photos = H.photo_urls || [];
+  const gal = !photos.length ? '<div class="ph-empty">' + FH.esc(t('p.ls.photo')) + '</div>' :
+    '<div class="gallery' + (photos.length === 1 ? ' one' : '') + '">' + photos.slice(0, 3).map((u, i) => '<img class="' + (i === 0 ? 'g-main' : '') + '" src="' + FH.esc(u) + '" alt="" loading="lazy">').join('') + '</div>';
+  const isOwner = ME && H.owner_id === ME.id;
+  let bookBox;
+  if(isOwner) bookBox = '<p class="muted">' + FH.esc(t('p.ls.ownListing')) + '</p>';
+  else if(!H.owner_id) bookBox = '<p class="muted">' + FH.esc(t('p.ls.notBookable')) + '</p>';
+  else if(H.status !== 'approved') bookBox = '<p class="muted">' + FH.esc(t('p.ls.unavailable')) + '</p>';
+  else bookBox =
+    '<form id="book-form" novalidate>' +
+      '<div class="field-row"><div class="field-group"><label>' + FH.esc(t('p.ls.checkin')) + '</label><input type="date" name="in" min="' + FH.today() + '" required></div>' +
+      '<div class="field-group"><label>' + FH.esc(t('p.ls.checkout')) + '</label><input type="date" name="out" min="' + FH.today() + '" required></div></div>' +
+      '<div class="field-group"><label>' + FH.esc(t('p.ls.guests')) + '</label><input type="number" name="guests" min="1" max="' + (H.capacity || 20) + '" value="1" required></div>' +
+      '<div class="field-group"><label>' + FH.esc(t('p.ls.message')) + '</label><textarea name="message" rows="3" maxlength="1000" placeholder="' + FH.esc(t('p.ls.messagePh')) + '"></textarea></div>' +
+      '<div id="total-line" class="muted" style="margin-bottom:12px">' + FH.esc(t('p.ls.pickDates')) + '</div>' +
+      '<button class="btn" type="submit" id="book-btn" style="width:100%; justify-content:center;">' + FH.esc(ME ? t('p.ls.send') : t('p.ls.loginToBook')) + '</button>' +
+      '<div class="status-msg" id="book-msg" role="status"></div>' +
+      '<p class="muted" style="margin-top:10px;font-size:12.5px">' + FH.esc(t('p.ls.note')) + '</p>' +
+    '</form>';
+  const busyTxt = BUSY.length ? '<div class="busy-list"><b>' + FH.esc(t('p.ls.busy')) + ':</b> ' + BUSY.map(k => FH.esc(FH.fmtD(k.start_date)) + ' → ' + FH.esc(FH.fmtD(k.end_date))).join(' · ') + '</div>' : '';
+  const keepForm = document.getElementById('book-form');
+  const prev = keepForm ? { i: keepForm.in.value, o: keepForm.out.value, g: keepForm.guests.value, m: keepForm.message.value } : null;
+  root.innerHTML =
+    '<div class="form-head" style="margin-bottom:22px"><div class="eyebrow"><span class="dot"></span><span>' + FH.esc(H.circuit) + '</span></div>' +
+    '<h1 class="headline" style="font-size:clamp(26px,3.6vw,38px); margin-top:16px;">' + FH.esc(H.title || (H.city + (H.country ? ', ' + H.country : ''))) + '</h1>' +
+    '<p>' + FH.esc(H.city) + (H.country ? ', ' + FH.esc(H.country) : '') + ' · ' + FH.esc(t('p.ls.hostedBy')) + ' ' + FH.esc((H.name || '').split(' ')[0]) + '</p><div id="rating-line" style="margin-top:8px"></div></div>' +
+    gal +
+    '<div class="ls-grid"><div>' +
+      '<div class="panel"><h3>' + FH.esc(t('p.ls.about')) + '</h3><p style="white-space:pre-line;font-size:14.5px">' + FH.esc(H.description || '') + '</p>' +
+        '<p class="muted" style="margin-top:12px">' + (H.capacity ? FH.esc(t('p.ls.capacity', { n: H.capacity })) : '') + (H.min_nights > 1 ? ' · ' + FH.esc(t('p.ls.minNights', { n: H.min_nights })) : '') + '</p></div>' +
+      (H.house_rules ? '<div class="panel"><h3>' + FH.esc(t('p.ls.rules')) + '</h3><p style="white-space:pre-line;font-size:14.5px">' + FH.esc(H.house_rules) + '</p></div>' : '') +
+      '<div class="panel"><div id="ls-map"></div></div>' +
+      '<div class="panel"><h3>' + FH.esc(t('p.ls.reviews')) + '</h3><div id="reviews"></div></div>' +
+    '</div><div><div class="panel book-box"><div class="price-big">' + FH.esc(FH.money(H.price_per_night || 0, H.currency)) + '<span class="muted" style="font-size:14px">' + FH.esc(t('p.ls.perNight')) + '</span></div>' + busyTxt + '<div style="margin-top:14px">' + bookBox + '</div></div></div></div>';
+  initMap();
+  const f = document.getElementById('book-form');
+  if(f){
+    if(prev){ f.in.value = prev.i; f.out.value = prev.o; f.guests.value = prev.g; f.message.value = prev.m; }
+    f.in.addEventListener('change', () => { if(f.in.value){ const d = FH.parseD(f.in.value); d.setDate(d.getDate() + 1); const s = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); f.out.min = s; if(f.out.value && f.out.value < s) f.out.value = ''; } updateTotal(); });
+    f.out.addEventListener('change', updateTotal);
+    f.addEventListener('submit', submitBooking);
+    updateTotal();
+  }
+  if(window.__ratingHtml) document.getElementById('rating-line').innerHTML = window.__ratingHtml;
+}
+
+function initMap(){
+  if(mapObj){ mapObj.remove(); mapObj = null; }
+  if(typeof L === 'undefined' || !H.lat) return;
+  mapObj = L.map('ls-map', { scrollWheelZoom: false }).setView([H.lat, H.lng], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(mapObj);
+  L.marker([H.lat, H.lng]).addTo(mapObj);
+}
+
+function overlaps(a, b){ return BUSY.some(k => a < k.end_date && b > k.start_date); }
+async function updateTotal(){
+  const f = document.getElementById('book-form'); if(!f) return;
+  const line = document.getElementById('total-line');
+  const a = f.in.value, b = f.out.value;
+  if(!a || !b || b <= a){ line.textContent = t('p.ls.pickDates'); return; }
+  const n = FH.nightsBetween(a, b);
+  let txt = n + ' ' + t('p.ls.nights') + ' · ' + t('p.acc.total') + ': ' + FH.money(H.price_per_night * n, H.currency);
+  if(overlaps(a, b)) { line.textContent = t('p.ls.datesConflict'); return; }
+  line.textContent = txt;
+  const cur = getDisplayCurrency();
+  if(cur !== H.currency){ try { const c = await convertPrice(H.price_per_night * n, H.currency); line.textContent = txt + ' (≈ ' + formatMoney(c.amount, c.currency) + ')'; } catch(e){} }
+}
+
+async function submitBooking(e){
+  e.preventDefault();
+  const f = e.target, msg = document.getElementById('book-msg'), btn = document.getElementById('book-btn');
+  if(!ME){ location.href = 'auth.html?next=' + encodeURIComponent('listing.html?id=' + ID); return; }
+  if(!f.in.value || !f.out.value){ FH.toast(msg, t('p.ls.pickDates'), false); return; }
+  if(overlaps(f.in.value, f.out.value)){ FH.toast(msg, t('p.ls.datesConflict'), false); return; }
+  btn.disabled = true; FH.toast(msg, t('p.ls.sending'), true);
+  const { error } = await sb.rpc('request_booking', { p_host: ID, p_in: f.in.value, p_out: f.out.value, p_guests: parseInt(f.guests.value, 10) || 1, p_message: f.message.value || null });
+  btn.disabled = false;
+  if(error){ FH.toast(msg, FH.errText(error), false); return; }
+  FH.toast(msg, t('p.ls.sent'), true);
+  setTimeout(() => { location.href = 'account.html#trips'; }, 1600);
+}
+
+async function loadReviews(){
+  const { data } = await sb.from('reviews').select('rating, comment, guest_name, created_at').eq('host_id', ID).order('created_at', { ascending: false }).limit(50);
+  const box = document.getElementById('reviews'); if(!box) return;
+  const list = data || [];
+  if(!list.length){ box.innerHTML = '<p class="muted">' + FH.esc(t('p.ls.noReviews')) + '</p>'; return; }
+  const avg = list.reduce((s, r) => s + r.rating, 0) / list.length;
+  window.__ratingHtml = '<span class="rt" style="color:#facc15">★ ' + avg.toFixed(1) + '</span> <span class="muted">(' + list.length + ')</span>';
+  document.getElementById('rating-line').innerHTML = window.__ratingHtml;
+  box.innerHTML = list.map(r => '<div class="review"><span class="who">' + FH.esc((r.guest_name || '').split(' ')[0]) + '</span> <span class="rt">' + '★'.repeat(r.rating) + '</span> <span class="muted">· ' + FH.esc(FH.fmtD(r.created_at.slice(0, 10))) + '</span>' + (r.comment ? '<div>' + FH.esc(r.comment) + '</div>' : '') + '</div>').join('');
+}
+
+</script>
+</body>
+</html>

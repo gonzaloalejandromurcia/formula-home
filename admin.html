@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Admin | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap form-page">
+
+  <div class="form-head">
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="p.ad.title">Admin</span></div>
+    <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;" data-i18n="p.ad.title">Admin</h1>
+  </div>
+  <div id="ad-root"></div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+
+FH.wire();
+const sb = FH.sb;
+let STATUS = 'pending';
+window.onLangChange = () => { if(document.getElementById('ad-list')) load(); };
+(async () => {
+  const u = await FH.requireAuth(); if(!u) return;
+  const p = await FH.profile();
+  const root = document.getElementById('ad-root');
+  if(!p || !p.is_admin){ root.innerHTML = '<p class="muted">' + FH.esc(t('p.ad.denied')) + '</p>'; return; }
+  root.innerHTML = '<div class="stat-row" id="stats"></div><div class="tabs" id="ad-tabs" style="flex-wrap:wrap">' +
+    ['pending', 'approved', 'rejected', 'paused'].map(s => '<button class="tab' + (s === STATUS ? ' active' : '') + '" data-s="' + s + '">' + FH.esc(t('st.' + s)) + '</button>').join('') +
+    '</div><div id="ad-list"></div>';
+  document.getElementById('ad-tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('.tab'); if(!b) return;
+    STATUS = b.dataset.s; document.querySelectorAll('#ad-tabs .tab').forEach(x => x.classList.toggle('active', x === b)); load();
+  });
+  document.getElementById('ad-list').addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-act]'); if(!b) return;
+    const { error } = await sb.from('hosts').update({ status: b.dataset.act }).eq('id', b.dataset.id);
+    if(error){ alert(FH.errText(error)); return; }
+    load(); stats();
+  });
+  stats(); load();
+})();
+async function stats(){
+  const { data } = await sb.rpc('admin_stats');
+  if(!data) return;
+  const sum = o => Object.values(o || {}).reduce((a, b) => a + b, 0);
+  const box = document.getElementById('stats');
+  box.innerHTML = '<div class="stat"><b>' + data.users + '</b><span>' + FH.esc(t('p.ad.users')) + '</span></div>' +
+    '<div class="stat"><b>' + sum(data.listings) + '</b><span>' + FH.esc(t('p.ad.listings')) + ' (' + ((data.listings || {}).pending || 0) + ' ' + FH.esc(t('st.pending')) + ')</span></div>' +
+    '<div class="stat"><b>' + sum(data.bookings) + '</b><span>' + FH.esc(t('p.ad.bookings')) + '</span></div>';
+}
+async function load(){
+  const { data, error } = await sb.rpc('admin_listings', { p_status: STATUS });
+  const box = document.getElementById('ad-list');
+  if(error){ box.textContent = FH.errText(error); return; }
+  if(!data || !data.length){ box.innerHTML = '<p class="muted">' + FH.esc(t('p.ad.none')) + '</p>'; return; }
+  box.innerHTML = data.map(h => '<div class="item"><div class="item-top"><div><h4>' + FH.esc(h.title || h.name) + '</h4>' +
+    '<div class="sub">' + FH.esc(h.city) + (h.country ? ', ' + FH.esc(h.country) : '') + ' · ' + FH.esc(h.circuit) + '</div>' +
+    '<div class="sub">' + FH.esc(FH.money(h.price_per_night || 0, h.currency)) + ' · ' + FH.esc(t('p.ad.owner')) + ': ' + FH.esc(h.owner_email || t('p.ad.legacy')) + '</div></div>' + FH.badge(h.status) + '</div>' +
+    (h.description ? '<div class="msg">' + FH.esc(h.description.slice(0, 300)) + '</div>' : '') +
+    ((h.photo_urls || []).length ? '<div class="thumb-row">' + h.photo_urls.map(u => '<div class="thumb"><img src="' + FH.esc(u) + '" alt=""></div>').join('') + '</div>' : '') +
+    '<div class="btn-row">' +
+      (h.status !== 'approved' ? '<button class="btn btn-small" data-act="approved" data-id="' + h.id + '">' + FH.esc(t('p.ad.approve')) + '</button>' : '') +
+      (h.status !== 'rejected' ? '<button class="btn btn-danger btn-small" data-act="rejected" data-id="' + h.id + '">' + FH.esc(t('p.ad.reject')) + '</button>' : '') +
+      '<a class="btn btn-ghost btn-small" href="listing.html?id=' + h.id + '">' + FH.esc(t('p.hp.view')) + '</a>' +
+    '</div></div>').join('');
+}
+
+</script>
+</body>
+</html>

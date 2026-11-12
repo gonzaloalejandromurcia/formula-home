@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Host panel | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap form-page">
+
+  <div class="form-head">
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="p.hp.title">Host panel</span></div>
+    <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;" data-i18n="p.hp.title">Host panel</h1>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3 data-i18n="p.hp.requests">Booking requests</h3><span class="muted" id="req-count"></span></div>
+    <div id="requests"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3 data-i18n="p.hp.listings">My listings</h3><a class="btn btn-small" href="host-register.html" data-i18n="p.hp.newListing">List a place</a></div>
+    <div id="listings"></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+
+FH.wire();
+const sb = FH.sb;
+let ME = null, LISTINGS = [], BOOKINGS = [];
+window.onLangChange = () => { renderRequests(); renderListings(); };
+
+(async () => {
+  ME = await FH.requireAuth(); if(!ME) return;
+  await loadAll();
+})();
+
+async function loadAll(){
+  const l = await sb.from('hosts').select(FH.LISTING_COLS).eq('owner_id', ME.id).order('created_at', { ascending: false });
+  if(l.error){ document.getElementById('listings').textContent = FH.errText(l.error); return; }
+  LISTINGS = l.data || [];
+  const ids = LISTINGS.map(x => x.id);
+  if(ids.length){
+    const b = await sb.from('bookings')
+      .select('id, host_id, guest_name, check_in, check_out, nights, guests, message, total, currency, status, created_at')
+      .in('host_id', ids).order('check_in', { ascending: true });
+    BOOKINGS = b.data || [];
+  } else BOOKINGS = [];
+  renderRequests(); renderListings();
+}
+
+function listingName(id){ const h = LISTINGS.find(x => x.id === id); return h ? (h.title || (h.city + ' · ' + h.circuit)) : ''; }
+
+function renderRequests(){
+  const box = document.getElementById('requests'); if(!box) return;
+  const order = { requested: 0, accepted: 1, declined: 2, cancelled: 3 };
+  const list = BOOKINGS.slice().sort((a, b) => (order[a.status] - order[b.status]) || a.check_in.localeCompare(b.check_in));
+  const pend = list.filter(b => b.status === 'requested').length;
+  document.getElementById('req-count').textContent = pend ? pend + ' ' + t('p.hp.newCount') : '';
+  if(!list.length){ box.innerHTML = '<p class="muted">' + FH.esc(t('p.hp.noRequests')) + '</p>'; return; }
+  const today = FH.today();
+  box.innerHTML = list.map(b => {
+    const canCancel = b.status === 'accepted' && b.check_in >= today;
+    return '<div class="item" data-id="' + b.id + '">' +
+      '<div class="item-top"><div>' +
+        '<h4>' + FH.esc(b.guest_name) + '</h4>' +
+        '<div class="sub">' + FH.esc(listingName(b.host_id)) + '</div>' +
+        '<div class="sub">' + FH.esc(FH.fmtD(b.check_in)) + ' → ' + FH.esc(FH.fmtD(b.check_out)) + ' · ' + b.nights + ' ' + FH.esc(t('p.acc.nights')) + ' · ' + b.guests + ' ' + FH.esc(t('p.acc.guests')) + '</div>' +
+        '<div class="sub">' + FH.esc(t('p.acc.total')) + ': <b>' + FH.esc(FH.money(b.total, b.currency)) + '</b></div>' +
+      '</div>' + FH.badge(b.status) + '</div>' +
+      (b.message ? '<div class="msg">' + FH.esc(b.message) + '</div>' : '') +
+      '<div class="contact-box" hidden></div>' +
+      '<div class="btn-row">' +
+        (b.status === 'requested' && b.check_in >= today ? '<button class="btn btn-small" data-act="accept">' + FH.esc(t('p.hp.accept')) + '</button><button class="btn btn-danger btn-small" data-act="decline">' + FH.esc(t('p.hp.decline')) + '</button>' : '') +
+        (b.status === 'accepted' ? '<button class="btn btn-ghost btn-small" data-act="contact">' + FH.esc(t('p.hp.guestContact')) + '</button>' : '') +
+        ((b.status === 'requested' || b.status === 'accepted') ? '<button class="btn btn-ghost btn-small" data-act="msgs">' + FH.esc(t('p.acc.messages')) + '</button>' : '') +
+        (canCancel ? '<button class="btn btn-danger btn-small" data-act="cancel">' + FH.esc(t('p.hp.cancelBooking')) + '</button>' : '') +
+      '</div><div class="thread-box" hidden></div><div class="status-msg"></div></div>';
+  }).join('');
+}
+
+document.getElementById('requests').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  const item = b.closest('.item'), id = item.dataset.id, st = item.querySelector('.status-msg'), act = b.dataset.act;
+  if(act === 'accept' || act === 'decline'){
+    const { error } = await sb.rpc('respond_booking', { p_booking: id, p_action: act });
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    await loadAll();
+  } else if(act === 'cancel'){
+    if(!confirm(t('p.hp.confirm'))) return;
+    const { error } = await sb.rpc('cancel_booking', { p_booking: id });
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    await loadAll();
+  } else if(act === 'contact'){
+    const box = item.querySelector('.contact-box');
+    if(!box.hidden){ box.hidden = true; return; }
+    const { data, error } = await sb.rpc('booking_contact', { p_booking: id });
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    box.innerHTML = FH.contactHtml(data); box.hidden = false;
+  } else if(act === 'msgs'){
+    const box = item.querySelector('.thread-box');
+    if(!box.hidden){ box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false; FH.thread(box, id, true);
+  }
+});
+
+function renderListings(){
+  const box = document.getElementById('listings'); if(!box) return;
+  if(!LISTINGS.length){ box.innerHTML = '<p class="muted">' + FH.esc(t('p.hp.noListings')) + '</p>'; return; }
+  box.innerHTML = LISTINGS.map(h => {
+    const note = h.status === 'pending' ? t('p.hp.reviewNote') : (h.status === 'rejected' ? t('p.hp.rejectedNote') : '');
+    return '<div class="item" data-id="' + h.id + '">' +
+      '<div class="item-top"><div>' +
+        '<h4>' + FH.esc(h.title || (h.city + ', ' + (h.country || ''))) + '</h4>' +
+        '<div class="sub">' + FH.esc(h.city) + (h.country ? ', ' + FH.esc(h.country) : '') + ' · ' + FH.esc(h.circuit) + '</div>' +
+        '<div class="sub">' + FH.esc(FH.money(h.price_per_night || 0, h.currency)) + FH.esc(t('p.ls.perNight')) + (h.capacity ? ' · ' + FH.esc(t('p.ls.capacity', { n: h.capacity })) : '') + '</div>' +
+      '</div>' + FH.badge(h.status) + '</div>' +
+      (note ? '<div class="sub" style="margin-top:8px">' + FH.esc(note) + '</div>' : '') +
+      '<div class="btn-row">' +
+        '<a class="btn btn-ghost btn-small" href="host-register.html?id=' + h.id + '">' + FH.esc(t('p.hp.edit')) + '</a>' +
+        (h.status === 'approved' ? '<a class="btn btn-ghost btn-small" href="listing.html?id=' + h.id + '">' + FH.esc(t('p.hp.view')) + '</a><button class="btn btn-ghost btn-small" data-act="pause">' + FH.esc(t('p.hp.pause')) + '</button>' : '') +
+        (h.status === 'paused' ? '<button class="btn btn-small" data-act="resume">' + FH.esc(t('p.hp.resume')) + '</button>' : '') +
+        '<button class="btn btn-ghost btn-small" data-act="avail">' + FH.esc(t('p.hp.availability')) + '</button>' +
+      '</div><div class="avail-box" hidden></div><div class="status-msg"></div></div>';
+  }).join('');
+}
+
+document.getElementById('listings').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  const item = b.closest('.item'), id = item.dataset.id, st = item.querySelector('.status-msg'), act = b.dataset.act;
+  if(act === 'pause' || act === 'resume'){
+    const { error } = await sb.from('hosts').update({ status: act === 'pause' ? 'paused' : 'approved' }).eq('id', id);
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    await loadAll();
+  } else if(act === 'avail'){
+    const box = item.querySelector('.avail-box');
+    if(!box.hidden){ box.hidden = true; return; }
+    box.hidden = false; await renderAvail(box, id);
+  } else if(act === 'block'){
+    const box = item.querySelector('.avail-box');
+    const from = box.querySelector('[name=from]').value, to = box.querySelector('[name=to]').value, note = box.querySelector('[name=note]').value.trim();
+    if(!from || !to || to <= from){ FH.toast(st, t('err.bad_dates'), false); return; }
+    const { error } = await sb.from('host_blocks').insert({ host_id: id, start_date: from, end_date: to, note: note || null });
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    FH.toast(st, '', true); await renderAvail(box, id);
+  } else if(act === 'unblock'){
+    const { error } = await sb.from('host_blocks').delete().eq('id', b.dataset.bid);
+    if(error){ FH.toast(st, FH.errText(error), false); return; }
+    await renderAvail(item.querySelector('.avail-box'), id);
+  }
+});
+
+async function renderAvail(box, hostId){
+  const { data, error } = await sb.from('host_blocks').select('id, start_date, end_date, note').eq('host_id', hostId).order('start_date');
+  const rows = (data || []).map(k => '<div class="sub" style="display:flex;gap:10px;align-items:center;margin:6px 0">' + FH.esc(FH.fmtD(k.start_date)) + ' → ' + FH.esc(FH.fmtD(k.end_date)) + (k.note ? ' · ' + FH.esc(k.note) : '') + ' <button class="btn btn-ghost btn-small" data-act="unblock" data-bid="' + k.id + '">' + FH.esc(t('p.hp.unblock')) + '</button></div>').join('');
+  box.innerHTML = '<p class="muted" style="margin:12px 0 8px">' + FH.esc(t('p.hp.blockHint')) + '</p>' +
+    (error ? FH.esc(FH.errText(error)) : (rows || '<p class="muted">' + FH.esc(t('p.hp.noBlocks')) + '</p>')) +
+    '<div class="field-row" style="margin-top:10px"><div class="field-group"><label>' + FH.esc(t('p.hp.from')) + '</label><input type="date" name="from" min="' + FH.today() + '"></div>' +
+    '<div class="field-group"><label>' + FH.esc(t('p.hp.to')) + '</label><input type="date" name="to" min="' + FH.today() + '"></div></div>' +
+    '<div class="field-group"><label>' + FH.esc(t('p.hp.note')) + '</label><input type="text" name="note" maxlength="120"></div>' +
+    '<button class="btn btn-small" data-act="block">' + FH.esc(t('p.hp.block')) + '</button>';
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<meta name="description" content="Formula Home conecta fans del motorsport con anfitriones y estadías para fines de semana de carrera." />
+<title>Formula Home | Stay with motorsport fans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="scroll-rail"><div class="fill" id="scroll-fill"></div></div>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+      <a href="host-register.html" class="btn btn-small" data-i18n="nav.becomeHost">Become a host</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    <a href="host-register.html" class="btn" style="margin-top:8px;">Become a host</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero" style="padding:0; border-bottom:none;">
+    <div class="hero-media">
+      <img src="assets/hero.jpg" alt="Anfitrión con traje de motorsport recibiendo a un fan en la puerta de su casa" />
+      <div class="hero-scrim"></div>
+      <div class="hero-content">
+        <div class="inner">
+          <div class="eyebrow"><span class="dot"></span><span data-i18n="hero.eyebrow">Fans hosting fans</span></div>
+          <h1 class="headline"><span data-i18n="hero.title1">Stay where</span><br/><span data-i18n="hero.title2">the passion is.</span><span class="accent" data-i18n="hero.title3">Live it with the fans.</span></h1>
+          <p class="sub" data-i18n="hero.sub">Stay with local hosts who share your love for motorsport. Compare real prices from hosts near the circuit — then book directly with them, no fees, no middleman.</p>
+          <div class="hero-actions">
+            <a href="calendar.html" class="btn" data-i18n="hero.cta1">Find your race weekend →</a>
+            <a href="host-register.html" class="btn btn-ghost" data-i18n="hero.cta2">Host a fan</a>
+          </div>
+          <div class="live-count" id="live-count"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ticker-strip">
+      <div class="ticker-track">
+        <span data-i18n="hero.cta2">Host a fan</span><span data-i18n="ticker.findRace">Find your race weekend</span><span data-i18n="hero.eyebrow">Fans hosting fans</span><span data-i18n="hero.title3">Live it with the fans.</span>
+        <span data-i18n="hero.cta2">Host a fan</span><span data-i18n="ticker.findRace">Find your race weekend</span><span data-i18n="hero.eyebrow">Fans hosting fans</span><span data-i18n="hero.title3">Live it with the fans.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="wrap">
+      <div class="sec-head" style="text-align:center; margin:0 auto 44px; max-width:640px;">
+        <div class="eyebrow" style="margin:0 auto;"><span class="dot"></span><span data-i18n="why.eyebrow">Fan travel guide</span></div>
+        <h2 class="headline"><span data-i18n="why.title1">Why travel with</span><br/><span data-i18n="why.title2">Formula Home</span></h2>
+        <p style="margin-left:auto; margin-right:auto;" data-i18n="why.sub">More community, fairer pricing, and a local race-weekend experience built for fans.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="icon"><span class="num">01</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+          </div>
+          <h3 data-i18n="why.card1.title">Fair prices<br/>on race week</h3>
+          <p data-i18n="why.card1.body">While hotels spike their rates, you'll find options built for fans and more reasonable budgets. See every host's price up front — no hidden fees.</p>
+        </div>
+        <div class="why-card">
+          <div class="icon"><span class="num">02</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c2.7.4 4.5 2.4 4.5 5.2"/></svg>
+          </div>
+          <h3 data-i18n="why.card2.title">Your tribe<br/>travels too</h3>
+          <p data-i18n="why.card2.body">Stay with people who understand why this weekend matters. Less transaction, more conversation and belonging.</p>
+        </div>
+        <div class="why-card">
+          <div class="icon"><span class="num">03</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+          </div>
+          <h3 data-i18n="why.card3.title">Local race-<br/>weekend edge</h3>
+          <p data-i18n="why.card3.body">Your hosts know the best routes to the circuit, where to eat, and how to experience the GP like a local.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona-2" style="border-bottom:none;">
+    <div class="wrap">
+      <div class="sec-head" style="margin-bottom:24px;">
+        <div class="eyebrow"><span class="dot"></span><span data-i18n="how.eyebrow">How it works</span></div>
+        <h2 class="headline"><span data-i18n="how.title1">We connect you.</span><br/><span data-i18n="how.title2">You handle the rest.</span></h2>
+        <p data-i18n="how.sub">Formula Home is a free directory — we show you real hosts and real prices. You contact and book directly with them, no platform fees.</p>
+      </div>
+      <div class="how-grid">
+        <div class="how-card">
+          <span class="step-num">01</span>
+          <h4 data-i18n="how.card1.title">Browse hosts near the circuit</h4>
+          <p data-i18n="how.card1.body">Filter by race weekend, city or price on the live map.</p>
+        </div>
+        <div class="how-card">
+          <span class="step-num">02</span>
+          <h4 data-i18n="how.card2.title">Contact the host directly</h4>
+          <p data-i18n="how.card2.body">WhatsApp or email — you two arrange the details.</p>
+        </div>
+        <div class="how-card">
+          <span class="step-num">03</span>
+          <h4 data-i18n="how.card3.title">No fees, no middleman</h4>
+          <p data-i18n="how.card3.body">You pay the host directly. Formula Home never touches your money.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <img src="assets/logo.jpg" alt="Formula Home" />
+        <p data-i18n="foot.tagline">Stays for fans who want to live the GP with community, not just sleep near the circuit.</p>
+      </div>
+      <div class="foot-col">
+        <h4 data-i18n="foot.community">Community</h4>
+        <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+        <a href="host-register.html" data-i18n="foot.becomeHost">Become a host</a>
+      </div>
+      <div class="foot-col">
+        <h4 data-i18n="foot.support">Support</h4>
+        <a href="mailto:info@formula-home.com" data-i18n="foot.contact">Contact</a>
+      </div>
+    </div>
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved. A free host-and-fan directory — no bookings or payments processed on this site.</div>
+  </div>
+</footer>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  document.getElementById('burger').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  // language + currency (desktop + mobile controls kept in sync)
+  applyI18n();
+  const langSelects = [document.getElementById('lang-select'), document.getElementById('lang-select-mobile')].filter(Boolean);
+  const currencySelects = [document.getElementById('currency-select'), document.getElementById('currency-select-mobile')].filter(Boolean);
+  langSelects.forEach(sel => { sel.value = getLang(); sel.addEventListener('change', () => {
+    setLang(sel.value);
+    langSelects.forEach(s => s.value = sel.value);
+    if(typeof onLangChange === 'function') onLangChange();
+  }); });
+  currencySelects.forEach(sel => { sel.value = getDisplayCurrency(); sel.addEventListener('change', () => {
+    setDisplayCurrency(sel.value);
+    currencySelects.forEach(s => s.value = sel.value);
+    if(typeof onCurrencyChange === 'function') onCurrencyChange();
+  }); });
+
+  const fill = document.getElementById('scroll-fill');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    fill.style.height = Math.max(4, pct) + '%';
+  });
+
+  const revealEls = document.querySelectorAll('section');
+  revealEls.forEach(el => el.classList.add('reveal'));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('in'); } });
+  }, { threshold: 0.08 });
+  revealEls.forEach(el => io.observe(el));
+
+  // live host count
+  let liveHostCount = null;
+  function renderLiveCount(){
+    if(liveHostCount === null) return;
+    document.getElementById('live-count').innerHTML =
+      `<span class="dot-live"></span> ${liveHostCount} ${t('hero.liveCountSuffix')}`;
+  }
+  function onLangChange(){ renderLiveCount(); }
+  FH.initNav();
+  (async () => {
+    try{
+      const { count, error } = await supabaseClient
+        .from('hosts')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'approved');
+      if(!error && count !== null){
+        liveHostCount = count;
+        renderLiveCount();
+      }
+    }catch(e){}
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>List your place | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap form-page">
+
+  <div class="form-head">
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="nav.host">Host a fan</span></div>
+    <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;"><span id="t1" data-i18n="p.reg.titleNew1">List your place</span><br/><span id="t2" data-i18n="p.reg.titleNew2">for race weekend</span></h1>
+    <p data-i18n="p.reg.sub">Free to list.</p>
+  </div>
+  <form id="host-form" class="form-shell" novalidate>
+    <div>
+      <div class="field-group"><label data-i18n="p.reg.listingTitle">Listing title</label>
+        <input type="text" name="title" required maxlength="100" data-i18n-placeholder="p.reg.listingTitlePh" /></div>
+      <div class="field-row">
+        <div class="field-group"><label data-i18n="host.city">City</label><input type="text" name="city" required maxlength="80" /></div>
+        <div class="field-group"><label data-i18n="host.country">Country</label><input type="text" name="country" maxlength="80" /></div>
+      </div>
+      <div class="field-group"><label data-i18n="host.circuit">Nearest circuit / race weekend</label>
+        <select name="circuit" id="circuit-select" required><option value="" data-i18n="host.circuitPlaceholder">Select a circuit...</option></select></div>
+      <div class="field-group"><label data-i18n="host.pinLabel">Pin your exact location on the map</label>
+        <div id="map-picker"></div><div class="map-hint" id="map-hint" data-i18n="host.mapHintDefault"></div></div>
+      <div class="field-group"><label data-i18n="p.reg.photos">Photos</label>
+        <div class="thumb-row" id="photo-row"></div>
+        <input type="file" id="photo-input" accept="image/*" multiple hidden />
+        <button type="button" class="btn btn-ghost btn-small" id="photo-btn" data-i18n="p.reg.addPhotos">Add photos</button></div>
+    </div>
+    <div>
+      <div class="field-row">
+        <div class="field-group"><label data-i18n="host.price">Price per night</label><input type="number" name="price" min="1" step="1" required /></div>
+        <div class="field-group"><label data-i18n="host.currency">Currency</label>
+          <select name="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>ARS</option><option>BRL</option><option>MXN</option><option>JPY</option><option>CNY</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label data-i18n="host.capacity">Capacity (guests)</label><input type="number" name="capacity" min="1" max="50" step="1" required value="2" /></div>
+        <div class="field-group"><label data-i18n="p.reg.minNights">Minimum nights</label><input type="number" name="min_nights" min="1" max="30" step="1" required value="1" /></div>
+      </div>
+      <div class="field-group"><label data-i18n="host.description">Description</label><textarea name="description" rows="5" maxlength="3000" required></textarea></div>
+      <div class="field-group"><label data-i18n="p.reg.rules">House rules</label><textarea name="house_rules" rows="3" maxlength="1500" data-i18n-placeholder="p.reg.rulesPh"></textarea></div>
+      <p class="muted" style="margin:6px 0 14px" data-i18n="p.reg.privateNote"></p>
+      <div class="field-group"><label data-i18n="host.contactMethod">Preferred contact method</label>
+        <div class="radio-row" id="contact-method-group">
+          <label class="radio-pill active"><input type="radio" name="contact_method" value="whatsapp" checked><span data-i18n="contact.whatsapp">WhatsApp</span></label>
+          <label class="radio-pill"><input type="radio" name="contact_method" value="email"><span data-i18n="contact.email">Email</span></label>
+          <label class="radio-pill"><input type="radio" name="contact_method" value="instagram"><span data-i18n="contact.instagram">Instagram</span></label>
+        </div></div>
+      <div class="field-group"><label id="contact-value-label"></label><input type="text" name="contact_value" id="contact-value" required maxlength="120" /></div>
+      <div class="field-group"><label data-i18n="p.reg.phone">Phone</label><input type="tel" name="phone" maxlength="40" /></div>
+      <div class="submit-row">
+        <button type="submit" class="btn" style="width:100%; justify-content:center;" id="submit-btn" data-i18n="p.reg.submitNew">Send for review</button>
+        <div class="status-msg" id="status-msg" role="status"></div>
+      </div>
+    </div>
+  </form>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+
+FH.wire();
+const sb = FH.sb;
+const EDIT_ID = new URLSearchParams(location.search).get('id');
+let ME = null, PROFILE = null, EXISTING = null, PHOTOS = [], marker = null, hint = null;
+
+const circuitSelect = document.getElementById('circuit-select');
+RACES.slice().sort((a,b)=> new Date(a.start)-new Date(b.start)).forEach(r => {
+  const o = document.createElement('option'); o.value = r.circuit + ' — ' + r.name; o.dataset.lat = r.lat; o.dataset.lng = r.lng;
+  o.textContent = r.circuit + ' — ' + r.name + ' (' + r.city + ')'; circuitSelect.appendChild(o);
+});
+const oo = document.createElement('option'); oo.value = 'Other / not listed'; oo.dataset.lat = 0; oo.dataset.lng = 0; oo.setAttribute('data-i18n','host.circuitOther'); oo.textContent = 'Other / not listed'; circuitSelect.appendChild(oo);
+
+const map = L.map('map-picker').setView([30, 10], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
+function updateHint(){
+  const el = document.getElementById('map-hint');
+  if(!hint) el.textContent = t('host.mapHintDefault');
+  else if(hint.kind === 'pin') el.textContent = t('host.pinSetTemplate', { lat: hint.lat.toFixed(4), lng: hint.lng.toFixed(4) });
+  else el.textContent = t('host.approxPinTemplate', { circuit: hint.circuit });
+}
+function setMarker(lat, lng){
+  if(marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+  marker.on('dragend', () => { const p = marker.getLatLng(); hint = { kind: 'pin', lat: p.lat, lng: p.lng }; updateHint(); });
+}
+map.on('click', e => { setMarker(e.latlng.lat, e.latlng.lng); hint = { kind: 'pin', lat: e.latlng.lat, lng: e.latlng.lng }; updateHint(); });
+circuitSelect.addEventListener('change', e => {
+  const o = e.target.selectedOptions[0]; const lat = parseFloat(o.dataset.lat), lng = parseFloat(o.dataset.lng);
+  if(lat && lng){ map.setView([lat, lng], 11); setMarker(lat, lng); hint = { kind: 'approx', circuit: o.value }; updateHint(); }
+});
+
+const pills = document.querySelectorAll('#contact-method-group .radio-pill');
+function contactLabel(){
+  const v = document.querySelector('#contact-method-group input:checked').value;
+  const m = { whatsapp: ['host.whatsappLabel','host.whatsappPh'], email: ['host.emailLabel2','host.emailPh2'], instagram: ['host.instagramLabel','host.instagramPh'] }[v];
+  document.getElementById('contact-value-label').textContent = t(m[0]);
+  document.getElementById('contact-value').placeholder = t(m[1]);
+}
+pills.forEach(p => p.addEventListener('click', () => { pills.forEach(x => x.classList.remove('active')); p.classList.add('active'); p.querySelector('input').checked = true; contactLabel(); }));
+contactLabel();
+window.onLangChange = () => { updateHint(); contactLabel(); };
+
+// ---- photos ----
+function renderPhotos(){
+  const row = document.getElementById('photo-row');
+  row.innerHTML = PHOTOS.map((p, i) => '<div class="thumb"><img src="' + FH.esc(p.url) + '" alt=""><button type="button" class="thumb-x" data-i="' + i + '" aria-label="' + FH.esc(t('p.reg.removePhoto')) + '">×</button></div>').join('');
+  document.getElementById('photo-btn').hidden = PHOTOS.length >= 6;
+}
+document.getElementById('photo-row').addEventListener('click', e => { const b = e.target.closest('.thumb-x'); if(!b) return; PHOTOS.splice(parseInt(b.dataset.i, 10), 1); renderPhotos(); });
+document.getElementById('photo-btn').addEventListener('click', () => document.getElementById('photo-input').click());
+document.getElementById('photo-input').addEventListener('change', e => {
+  Array.from(e.target.files).slice(0, 6 - PHOTOS.length).forEach(f => { if(/^image\//.test(f.type)) PHOTOS.push({ file: f, url: URL.createObjectURL(f) }); });
+  e.target.value = ''; renderPhotos();
+});
+
+(async () => {
+  ME = await FH.user();
+  if(!ME){ location.href = 'auth.html?next=' + encodeURIComponent('host-register.html' + location.search); return; }
+  PROFILE = await FH.profile();
+  const f = document.getElementById('host-form');
+  if(EDIT_ID){
+    const { data } = await sb.from('hosts').select(FH.LISTING_COLS).eq('id', EDIT_ID).eq('owner_id', ME.id).maybeSingle();
+    if(!data){ document.getElementById('status-msg').textContent = t('p.ls.notFound'); f.querySelector('button[type=submit]').disabled = true; return; }
+    EXISTING = data;
+    document.getElementById('t1').setAttribute('data-i18n', 'p.reg.titleEdit1'); document.getElementById('t2').setAttribute('data-i18n', 'p.reg.titleEdit2');
+    document.getElementById('submit-btn').setAttribute('data-i18n', 'p.reg.submitEdit');
+    f.title.value = data.title || ''; f.city.value = data.city || ''; f.country.value = data.country || '';
+    f.price.value = data.price_per_night || ''; f.currency.value = data.currency || 'USD'; f.capacity.value = data.capacity || 2; f.min_nights.value = data.min_nights || 1;
+    f.description.value = data.description || ''; f.house_rules.value = data.house_rules || '';
+    if(![...circuitSelect.options].some(o => o.value === data.circuit)){ const o = document.createElement('option'); o.value = data.circuit; o.textContent = data.circuit; circuitSelect.appendChild(o); }
+    circuitSelect.value = data.circuit;
+    setMarker(data.lat, data.lng); map.setView([data.lat, data.lng], 12); hint = { kind: 'pin', lat: data.lat, lng: data.lng }; updateHint();
+    PHOTOS = (data.photo_urls || []).map(u => ({ url: u, existing: true })); renderPhotos();
+    const pr = await sb.from('host_private').select('contact_method, contact_value, phone').eq('host_id', EDIT_ID).maybeSingle();
+    if(pr.data){
+      const r = f.querySelector('input[name=contact_method][value="' + pr.data.contact_method + '"]'); if(r){ r.checked = true; pills.forEach(x => x.classList.toggle('active', x.contains(r))); }
+      f.contact_value.value = pr.data.contact_value || ''; f.phone.value = pr.data.phone || ''; contactLabel();
+    }
+  }
+  applyI18n();
+})();
+
+document.getElementById('host-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target, btn = document.getElementById('submit-btn'), st = document.getElementById('status-msg');
+  if(!ME) return;
+  if(!f.checkValidity()){ f.reportValidity(); return; }
+  if(!marker){ FH.toast(st, t('host.pinRequiredMsg'), false); return; }
+  btn.disabled = true; FH.toast(st, t('p.reg.submitting'), true);
+  try {
+    const pos = marker.getLatLng();
+    // upload new photos
+    const urls = [];
+    const needUpload = PHOTOS.some(p => !p.existing);
+    if(needUpload) FH.toast(st, t('p.reg.uploading'), true);
+    for(const p of PHOTOS){
+      if(p.existing){ urls.push(p.url); continue; }
+      const blob = await FH.resizeImage(p.file, 1600);
+      const path = ME.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+      const up = await sb.storage.from('listing-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+      if(up.error) throw up.error;
+      urls.push(sb.storage.from('listing-photos').getPublicUrl(path).data.publicUrl);
+    }
+    const payload = {
+      title: f.title.value.trim(), city: f.city.value.trim(), country: f.country.value.trim() || null, circuit: f.circuit.value,
+      lat: pos.lat, lng: pos.lng, price_per_night: parseFloat(f.price.value), currency: f.currency.value,
+      capacity: parseInt(f.capacity.value, 10), min_nights: parseInt(f.min_nights.value, 10),
+      description: f.description.value.trim(), house_rules: f.house_rules.value.trim() || null, photo_urls: urls
+    };
+    const priv = { contact_method: f.contact_method.value, contact_value: f.contact_value.value.trim(), phone: f.phone.value.trim() || null, email: ME.email || null };
+    let hostId = EDIT_ID;
+    if(EXISTING){
+      const r = await sb.from('hosts').update(payload).eq('id', EDIT_ID);
+      if(r.error) throw r.error;
+      const r2 = await sb.from('host_private').upsert(Object.assign({ host_id: EDIT_ID }, priv));
+      if(r2.error) throw r2.error;
+    } else {
+      const name = (PROFILE && PROFILE.full_name) || (ME.user_metadata && ME.user_metadata.full_name) || (ME.email || '').split('@')[0] || 'Host';
+      const r = await sb.from('hosts').insert(Object.assign({ owner_id: ME.id, status: 'pending', name }, payload)).select('id').single();
+      if(r.error) throw r.error;
+      hostId = r.data.id;
+      const r2 = await sb.from('host_private').insert(Object.assign({ host_id: hostId }, priv));
+      if(r2.error) throw r2.error;
+    }
+    FH.toast(st, EXISTING ? t('p.reg.doneEdit') : t('p.reg.doneNew'), true);
+    setTimeout(() => { location.href = 'host-dashboard.html'; }, 1600);
+  } catch(err){
+    FH.toast(st, FH.errText(err), false);
+    btn.disabled = false;
+  }
+});
+
+</script>
+</body>
+</html>

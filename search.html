@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Find a stay | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .stays-page{ padding:36px 0 70px; }
+  .stays-head h1{ font-size:clamp(30px,4vw,44px); }
+  .stays-sub-row{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin:14px 0 26px; }
+  .stays-sub-row p{ color:var(--steel); font-size:14px; }
+  .filter-group{ display:flex; gap:10px; flex-wrap:wrap; }
+  .filter-select{
+    padding:10px 16px; border-radius:999px; border:1px solid var(--line-strong);
+    background:#0a0a0a; color:#fff; font-size:12.5px; font-family:'Oswald',sans-serif; font-weight:600; font-style:italic;
+    text-transform:uppercase;
+  }
+  .results-area{ display:grid; grid-template-columns:1fr; gap:0; border:1px solid var(--line-strong); border-radius:12px; overflow:hidden; }
+  @media(min-width:900px){ .results-area{ grid-template-columns:1fr 1fr; } }
+  #map{ min-height:420px; height:100%; }
+  @media(max-width:899px){ #map{ height:300px; } }
+  .list-pane{ max-height:600px; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; border-left:1px solid var(--line); }
+  @media(max-width:899px){ .list-pane{ border-left:none; border-top:1px solid var(--line); max-height:none; } }
+  .host-card{ border:1px solid var(--line-strong); border-radius:10px; padding:16px; cursor:pointer; transition:border-color .15s; }
+  .host-card:hover{ border-color:var(--red); }
+  .host-card .row1{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .host-card h4{ font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:16px; text-transform:uppercase; }
+  .host-card .price{ font-family:'Oswald',sans-serif; font-weight:700; color:var(--red); font-size:16px; white-space:nowrap; }
+  .host-card .city{ color:var(--steel); font-size:12.5px; margin-top:4px; }
+  .host-card p.desc{ font-size:13px; color:#ccc; margin-top:10px; line-height:1.5; }
+  .host-card .meta{ display:flex; gap:14px; margin-top:10px; font-size:12px; color:var(--steel); }
+  .host-card .contact-btn{ margin-top:12px; display:inline-block; font-size:12.5px; padding:8px 14px; border-radius:999px; background:var(--red); color:#fff; font-weight:600; }
+  .empty-pane, .loading-pane{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 30px; gap:16px; color:var(--steel); }
+  .spinner{ width:34px; height:34px; border-radius:50%; border:3px solid var(--line-strong); border-top-color:var(--red); animation:spin .9s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .leaflet-popup-content-wrapper{ background:#0a0a0a; color:#fff; border-radius:8px; }
+  .leaflet-popup-tip{ background:#0a0a0a; }
+  .popup-content b{ font-family:'Oswald',sans-serif; font-style:italic; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" class="active-link" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+      <a href="host-register.html" class="btn btn-small" data-i18n="nav.becomeHost">Become a host</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap stays-page">
+  <div class="stays-head">
+    <span class="eyebrow"><span class="dot"></span><span data-i18n="stays.allRaces">All races</span></span>
+    <h1 class="headline" style="margin-top:14px;" data-i18n="stays.title">Stays</h1>
+  </div>
+  <div class="stays-sub-row">
+    <p id="results-count" data-i18n="stays.loading">Loading hosts...</p>
+    <div class="filter-group">
+      <select class="filter-select" id="circuit-filter">
+        <option value="" data-i18n="search.allCircuits">All circuits</option>
+      </select>
+      <select class="filter-select" id="sort-select">
+        <option value="price-asc" data-i18n="search.sortPriceAsc">Price: low to high</option>
+        <option value="price-desc" data-i18n="search.sortPriceDesc">Price: high to low</option>
+        <option value="newest" data-i18n="search.sortNewest">Newest listings</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="results-area">
+    <div id="map"></div>
+    <div class="list-pane" id="list-pane">
+      <div class="loading-pane"><div class="spinner"></div><span data-i18n="search.loadingResultsMap">Loading results and map...</span></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  document.getElementById('burger').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  // language + currency (desktop + mobile controls kept in sync)
+  applyI18n();
+  const langSelects = [document.getElementById('lang-select'), document.getElementById('lang-select-mobile')].filter(Boolean);
+  const currencySelects = [document.getElementById('currency-select'), document.getElementById('currency-select-mobile')].filter(Boolean);
+  langSelects.forEach(sel => { sel.value = getLang(); sel.addEventListener('change', () => {
+    setLang(sel.value);
+    langSelects.forEach(s => s.value = sel.value);
+    if(typeof onLangChange === 'function') onLangChange();
+  }); });
+  currencySelects.forEach(sel => { sel.value = getDisplayCurrency(); sel.addEventListener('change', () => {
+    setDisplayCurrency(sel.value);
+    currencySelects.forEach(s => s.value = sel.value);
+    if(typeof onCurrencyChange === 'function') onCurrencyChange();
+  }); });
+
+  const map = L.map('map').setView([30, 10], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 18
+  }).addTo(map);
+
+  let allHosts = [];
+  let markers = [];
+
+  async function renderList(hosts){
+    const listPane = document.getElementById('list-pane');
+    const countEl = document.getElementById('results-count');
+    countEl.textContent = `${hosts.length} ${t('stays.hostsFoundSuffix')}`;
+
+    if(hosts.length === 0){
+      listPane.innerHTML = `
+        <div class="empty-pane">
+          <div style="width:44px;height:44px;border:1px solid var(--line-strong);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--steel)" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18"/><path d="M5 4h13l-2.5 4L18 12H5"/></svg>
+          </div>
+          <h3 style="color:#fff; font-size:16px;">${t('search.emptyTitle')}</h3>
+          <p style="max-width:280px;">${t('search.emptyBody')}</p>
+          <a href="host-register.html" class="btn" style="margin-top:8px;">${t('foot.becomeHost')}</a>
+        </div>`;
+      return;
+    }
+
+    const priced = await Promise.all(hosts.map(async h => {
+      const conv = await convertPrice(h.price_per_night, h.currency);
+      return { ...h, displayPrice: formatMoney(conv.amount, conv.currency) };
+    }));
+
+    listPane.innerHTML = priced.map(h => `
+      <div class="host-card" data-id="${FH.esc(h.id)}">
+        ${(h.photo_urls && h.photo_urls[0]) ? `<img class="thumb-card" src="${FH.esc(h.photo_urls[0])}" alt="" loading="lazy">` : ''}
+        <div class="row1">
+          <div>
+            <h4>${FH.esc(h.city)}${h.country ? ', ' + FH.esc(h.country) : ''}</h4>
+            <div class="city">${FH.esc(h.circuit)}</div>
+          </div>
+          <div class="price">${h.displayPrice}<span style="font-size:10px; color:var(--steel); font-weight:400;">/night</span></div>
+        </div>
+        ${h.description ? `<p class="desc">${FH.esc(h.description.slice(0,140))}${h.description.length>140?'…':''}</p>` : ''}
+        <div class="meta">
+          ${h.capacity ? `<span>${h.capacity} ${t('search.guestsSuffix')}</span>` : ''}
+          <span>${t('search.hostedBy')} ${FH.esc(h.name.split(' ')[0])}</span>
+        </div>
+        ${contactButton(h)}
+      </div>
+    `).join('');
+
+    listPane.querySelectorAll('.host-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if(e.target.tagName === 'A') return;
+        const id = card.dataset.id;
+        const h = hosts.find(x => x.id === id);
+        if(h){ map.setView([h.lat, h.lng], 12); openPopupFor(id); }
+      });
+    });
+  }
+
+  function contactButton(h){
+    return `<a class="contact-btn" href="listing.html?id=${FH.esc(h.id)}">${FH.esc(t('p.se.viewDetails'))}</a>`;
+  }
+
+  function openPopupFor(id){
+    const m = markers.find(x => x.hostId === id);
+    if(m) m.openPopup();
+  }
+
+  async function renderMarkers(hosts){
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    for(const h of hosts){
+      const conv = await convertPrice(h.price_per_night, h.currency);
+      const m = L.marker([h.lat, h.lng]).addTo(map);
+      m.hostId = h.id;
+      m.bindPopup(`<div class="popup-content"><b>${FH.esc(h.city)}</b><br/>${formatMoney(conv.amount, conv.currency)}/night · ${FH.esc(h.circuit)}<br/><a href="listing.html?id=${FH.esc(h.id)}">${FH.esc(t('p.se.viewDetails'))}</a></div>`);
+      markers.push(m);
+    }
+    if(hosts.length > 0){
+      const group = L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.3));
+    }
+  }
+
+  function applyFiltersAndRender(){
+    const circuit = document.getElementById('circuit-filter').value;
+    const sort = document.getElementById('sort-select').value;
+    let filtered = allHosts.filter(h => !circuit || h.circuit === circuit);
+    if(sort === 'price-asc') filtered.sort((a,b) => a.price_per_night - b.price_per_night);
+    if(sort === 'price-desc') filtered.sort((a,b) => b.price_per_night - a.price_per_night);
+    if(sort === 'newest') filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    renderList(filtered);
+    renderMarkers(filtered);
+  }
+  function onCurrencyChange(){ applyFiltersAndRender(); }
+  function onLangChange(){ applyFiltersAndRender(); }
+
+  document.getElementById('circuit-filter').addEventListener('change', applyFiltersAndRender);
+  document.getElementById('sort-select').addEventListener('change', applyFiltersAndRender);
+
+  FH.initNav();
+  (async () => {
+    const { data, error } = await supabaseClient
+      .from('hosts')
+      .select(FH.LISTING_COLS)
+      .eq('status', 'approved')
+      .order('created_at', { ascending:false });
+
+    if(error){
+      document.getElementById('results-count').textContent = t('search.loadError');
+      document.getElementById('list-pane').innerHTML = `<div class="empty-pane"><p>${FH.esc(error.message)}</p></div>`;
+      return;
+    }
+
+    allHosts = data || [];
+
+    const circuits = [...new Set(allHosts.map(h => h.circuit))];
+    const sel = document.getElementById('circuit-filter');
+    circuits.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+
+    applyFiltersAndRender();
+  })();
+</script>
+
+</body>
+</html>

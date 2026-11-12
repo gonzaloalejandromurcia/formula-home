@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Log in | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+    <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+    <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap form-page">
+
+  <div class="form-head">
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="p.login">Log in</span></div>
+    <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;"><span data-i18n="p.auth.title1">Your account</span><br/><span data-i18n="p.auth.title2">for race weekend</span></h1>
+    <p data-i18n="p.auth.sub">Log in to book a stay or manage your listing.</p>
+  </div>
+  <div class="panel auth-card">
+    <div class="tabs" id="tabs">
+      <button type="button" class="tab active" data-tab="login" data-i18n="p.auth.tabLogin">Log in</button>
+      <button type="button" class="tab" data-tab="signup" data-i18n="p.auth.tabSignup">Create account</button>
+    </div>
+    <form id="auth-form" novalidate>
+      <div class="field-group" id="name-group" hidden>
+        <label data-i18n="p.auth.name">Full name</label>
+        <input type="text" name="name" autocomplete="name" maxlength="80" />
+      </div>
+      <div class="field-group">
+        <label data-i18n="p.auth.email">Email</label>
+        <input type="email" name="email" autocomplete="email" required />
+      </div>
+      <div class="field-group">
+        <label data-i18n="p.auth.password">Password</label>
+        <input type="password" name="password" minlength="8" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn" id="auth-btn" style="width:100%; justify-content:center;"></button>
+      <div class="status-msg" id="auth-msg" role="status"></div>
+      <button type="button" class="link-btn" id="forgot-btn" data-i18n="p.auth.forgot">Forgot your password?</button>
+    </form>
+    <form id="reset-form" hidden novalidate>
+      <div class="field-group">
+        <label data-i18n="p.auth.newPassword">New password</label>
+        <input type="password" name="newpw" minlength="8" autocomplete="new-password" required />
+      </div>
+      <button type="submit" class="btn" style="width:100%; justify-content:center;" data-i18n="p.auth.setPassword">Save new password</button>
+      <div class="status-msg" id="reset-msg" role="status"></div>
+    </form>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyright">© 2026 Formula Home. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+
+FH.wire();
+const sb = FH.sb;
+const params = new URLSearchParams(location.search);
+const NEXT = FH.safeNext(params.get('next'));
+const isRecovery = location.hash.indexOf('type=recovery') >= 0;
+let mode = params.get('mode') === 'signup' ? 'signup' : 'login';
+const form = document.getElementById('auth-form');
+const msg = document.getElementById('auth-msg');
+const btn = document.getElementById('auth-btn');
+
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === m));
+  document.getElementById('name-group').hidden = (m !== 'signup');
+  form.password.autocomplete = (m === 'signup') ? 'new-password' : 'current-password';
+  document.getElementById('forgot-btn').hidden = (m === 'signup');
+  btn.textContent = t(m === 'signup' ? 'p.auth.signupBtn' : 'p.auth.loginBtn');
+  msg.textContent = ''; msg.className = 'status-msg';
+}
+window.onLangChange = () => setMode(mode);
+document.querySelectorAll('.tab').forEach(x => x.addEventListener('click', () => setMode(x.dataset.tab)));
+setMode(mode);
+
+(async () => {
+  const u = await FH.user();
+  if(u && !isRecovery) location.href = NEXT;
+})();
+sb.auth.onAuthStateChange((evt) => {
+  if(evt === 'PASSWORD_RECOVERY'){
+    form.hidden = true; document.getElementById('tabs').hidden = true;
+    document.getElementById('reset-form').hidden = false;
+  }
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = form.email.value.trim(), password = form.password.value, name = form.name.value.trim();
+  if(!email || !password){ FH.toast(msg, t('err.invalid_login'), false); return; }
+  if(mode === 'signup' && (!name || password.length < 8)){ FH.toast(msg, !name ? t('p.auth.name') + ' *' : t('err.weak_password'), false); return; }
+  btn.disabled = true; FH.toast(msg, t('p.auth.working'), true);
+  try {
+    if(mode === 'login'){
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+      location.href = NEXT;
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name }, emailRedirectTo: location.origin + '/auth.html' } });
+      if(error) throw error;
+      if(data.user && data.user.identities && data.user.identities.length === 0) throw new Error('already registered');
+      if(data.session){ location.href = NEXT; }
+      else { FH.toast(msg, t('p.auth.checkEmail'), true); form.reset(); }
+    }
+  } catch(err){
+    FH.toast(msg, FH.errText(err), false);
+  } finally { btn.disabled = false; }
+});
+
+document.getElementById('forgot-btn').addEventListener('click', async () => {
+  const email = form.email.value.trim();
+  if(!email){ FH.toast(msg, t('p.auth.forgotAsk'), false); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/auth.html' });
+  FH.toast(msg, error ? FH.errText(error) : t('p.auth.resetSent'), !error);
+});
+
+document.getElementById('reset-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const rm = document.getElementById('reset-msg');
+  const pw = e.target.newpw.value;
+  if(pw.length < 8){ FH.toast(rm, t('err.weak_password'), false); return; }
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if(error){ FH.toast(rm, FH.errText(error), false); return; }
+  FH.toast(rm, t('p.auth.passwordUpdated'), true);
+  setTimeout(() => location.href = 'account.html', 1200);
+});
+
+</script>
+</body>
+</html>

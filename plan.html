@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e20a16" />
+<title>Plan your race weekend | Formula Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .plan-page{ padding:36px 0 80px; }
+  .plan-head .date{ font-family:'Oswald',sans-serif; color:var(--red); font-size:13px; letter-spacing:0.05em; }
+  .plan-head h1{ font-size:clamp(30px,4.5vw,48px); margin-top:6px; }
+  .plan-head .loc{ color:var(--steel); margin-top:8px; font-size:14.5px; }
+  .plan-section{ margin-top:52px; }
+  .plan-section .sec-eyebrow{ margin-bottom:16px; }
+  .plan-section h2{ font-size:clamp(22px,3vw,30px); margin-bottom:8px; }
+  .plan-section > p{ color:var(--steel); font-size:14px; max-width:520px; margin-bottom:24px; }
+
+  .travel-grid{ display:grid; grid-template-columns:1fr; gap:14px; }
+  @media(min-width:760px){ .travel-grid{ grid-template-columns:repeat(3,1fr); } }
+  .travel-card{ border:1px solid var(--line-strong); border-radius:10px; padding:22px; display:flex; flex-direction:column; gap:12px; }
+  .travel-card .icon{ width:38px; height:38px; border-radius:8px; border:1px solid var(--line-strong); display:flex; align-items:center; justify-content:center; }
+  .travel-card .icon svg{ width:17px; height:17px; stroke:var(--red); }
+  .travel-card b{ font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:16px; text-transform:uppercase; }
+  .travel-card p{ font-size:13px; color:var(--steel); line-height:1.55; }
+  .travel-card a.go{ margin-top:auto; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--red); font-family:'Oswald',sans-serif; font-style:italic; text-transform:uppercase; }
+
+  .stay-area{ display:grid; grid-template-columns:1fr; gap:0; border:1px solid var(--line-strong); border-radius:12px; overflow:hidden; }
+  @media(min-width:900px){ .stay-area{ grid-template-columns:1fr 1fr; } }
+  #plan-map{ min-height:380px; height:100%; }
+  @media(max-width:899px){ #plan-map{ height:280px; } }
+  .list-pane{ max-height:520px; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; border-left:1px solid var(--line); }
+  @media(max-width:899px){ .list-pane{ border-left:none; border-top:1px solid var(--line); max-height:none; } }
+  .host-card{ border:1px solid var(--line-strong); border-radius:10px; padding:16px; }
+  .host-card.selected{ border-color:var(--red); background:rgba(227,21,31,0.06); }
+  .host-card .row1{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .host-card h4{ font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:16px; text-transform:uppercase; }
+  .host-card .price{ font-family:'Oswald',sans-serif; font-weight:700; color:var(--red); font-size:16px; white-space:nowrap; }
+  .host-card .dist{ color:var(--steel); font-size:12px; margin-top:4px; }
+  .host-card p.desc{ font-size:13px; color:#ccc; margin-top:10px; line-height:1.5; }
+  .host-card .card-actions{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .host-card .contact-btn{ display:inline-block; font-size:12.5px; padding:8px 14px; border-radius:999px; background:var(--red); color:#fff; font-weight:600; }
+  .host-card .add-btn{ display:inline-block; font-size:12.5px; padding:8px 14px; border-radius:999px; border:1px solid var(--line-strong); color:#fff; font-weight:600; background:transparent; cursor:pointer; }
+  .host-card.selected .add-btn{ border-color:var(--red); color:var(--red); }
+  .empty-pane{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:50px 26px; gap:14px; color:var(--steel); }
+  .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--line-strong); border-top-color:var(--red); animation:spin .9s linear infinite; margin:0 auto; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .leaflet-popup-content-wrapper{ background:#0a0a0a; color:#fff; border-radius:8px; }
+  .leaflet-popup-tip{ background:#0a0a0a; }
+
+  .pkg-box{ border:1px solid var(--line-strong); border-radius:12px; padding:24px; margin-top:24px; }
+  .pkg-step{ display:flex; gap:14px; align-items:flex-start; padding:16px 0; border-top:1px solid var(--line); }
+  .pkg-step:first-child{ border-top:none; padding-top:0; }
+  .pkg-step .step-badge{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:'Oswald',sans-serif; }
+  .pkg-step.done .step-badge{ background:var(--red); border-color:var(--red); }
+  .pkg-step .step-body{ flex:1; }
+  .pkg-step .step-body b{ font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:14.5px; text-transform:uppercase; display:block; margin-bottom:6px; }
+  .pkg-step .step-body p{ font-size:13px; color:var(--steel); margin-bottom:10px; }
+  .pkg-inline-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .pkg-inline-row input, .pkg-inline-row select{ background:#0a0a0a; border:1px solid var(--line-strong); border-radius:8px; padding:9px 12px; color:#fff; font-size:13px; }
+  .pkg-inline-row input[type=number]{ width:110px; }
+  .pkg-add-btn{ background:transparent; border:1px solid var(--red); color:var(--red); border-radius:8px; padding:9px 16px; font-family:'Oswald',sans-serif; font-weight:600; font-style:italic; font-size:12.5px; text-transform:uppercase; cursor:pointer; }
+  .pkg-summary{ background:#0a0a0a; border:1px solid var(--line-strong); border-radius:10px; padding:20px; margin-top:20px; display:none; }
+  .pkg-summary.show{ display:block; }
+  .pkg-summary .row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .pkg-summary .row:last-of-type{ border-bottom:none; }
+  .pkg-summary .row.total{ font-family:'Oswald',sans-serif; font-weight:700; font-size:16px; color:var(--red); border-top:1px solid var(--line-strong); margin-top:6px; padding-top:14px; }
+  .pkg-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+  .tips-list{ display:flex; flex-direction:column; gap:12px; }
+  .tip-row{ display:flex; gap:12px; align-items:flex-start; border:1px solid var(--line-strong); border-radius:10px; padding:16px; }
+  .tip-row .flag{ width:26px; height:26px; border-radius:6px; background:rgba(227,21,31,0.15); border:1px solid var(--red); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .tip-row p{ font-size:13.5px; color:#ddd; line-height:1.6; }
+
+  @media print{
+    header.nav, footer, .no-print{ display:none !important; }
+    body{ background:#fff; color:#000; }
+    .pkg-box{ border-color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-top">
+    <a href="index.html" class="logo"><img src="assets/logo.jpg" alt="Formula Home" /></a>
+    <nav class="main-links">
+      <a href="calendar.html" data-i18n="nav.calendar">Race calendar</a>
+      <a href="search.html" data-i18n="nav.stay">Find a stay</a>
+      <a href="host-register.html" data-i18n="nav.host">Host a fan</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+      <a href="host-register.html" class="btn btn-small" data-i18n="nav.becomeHost">Become a host</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+<div style="display:flex; gap:10px; margin:10px 0 4px;">
+      <select class="lang-select" id="lang-select-mobile">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="pt">PT</option>
+        <option value="fr">FR</option>
+        <option value="de">DE</option>
+        <option value="it">IT</option>
+        <option value="ja">JA</option>
+        <option value="zh">ZH</option>
+      </select>
+      <select class="currency-select" id="currency-select-mobile">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="ARS">ARS</option>
+        <option value="BRL">BRL</option>
+        <option value="MXN">MXN</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+      </select>
+    </div>
+    <a href="calendar.html">Race calendar</a>
+    <a href="search.html">Find a stay</a>
+    <a href="host-register.html">Host a fan</a>
+  </div>
+</header>
+
+<main class="wrap plan-page" id="plan-root">
+  <!-- filled by JS -->
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom" data-i18n="foot.copyrightPlan">© 2026 Formula Home. All rights reserved. Flight and travel links go to third-party sites — Formula Home doesn't sell tickets, book travel, or process payments.</div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/supabase.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-platform.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/races.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  document.getElementById('burger').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  const params = new URLSearchParams(location.search);
+  const raceId = params.get('race');
+  const race = RACES.find(r => r.id === raceId);
+  const root = document.getElementById('plan-root');
+
+  // ---------- package state ----------
+  const pkg = { race: null, flight: null, host: null };
+
+  function fmtDate(start, end){
+    const s = new Date(start), e = new Date(end);
+    const sameMonth = s.getMonth() === e.getMonth();
+    return sameMonth
+      ? `${s.toLocaleDateString('en-US',{month:'long'})} ${s.getDate()}–${e.getDate()}, ${e.getFullYear()}`
+      : `${s.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${e.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${e.getFullYear()}`;
+  }
+
+  let refreshHostPrices = () => {};
+  let refreshPackageSummary = () => {};
+  function onLangChange(){ applyI18n(); refreshHostPrices(); refreshPackageSummary(); }
+  function onCurrencyChange(){ refreshHostPrices(); refreshPackageSummary(); }
+
+  // language + currency (desktop + mobile controls kept in sync)
+  applyI18n();
+  const langSelects = [document.getElementById('lang-select'), document.getElementById('lang-select-mobile')].filter(Boolean);
+  const currencySelects = [document.getElementById('currency-select'), document.getElementById('currency-select-mobile')].filter(Boolean);
+  langSelects.forEach(sel => { sel.value = getLang(); sel.addEventListener('change', () => {
+    setLang(sel.value);
+    langSelects.forEach(s => s.value = sel.value);
+    onLangChange();
+  }); });
+  currencySelects.forEach(sel => { sel.value = getDisplayCurrency(); sel.addEventListener('change', () => {
+    setDisplayCurrency(sel.value);
+    currencySelects.forEach(s => s.value = sel.value);
+    onCurrencyChange();
+  }); });
+
+  if(!race){
+    root.innerHTML = `
+      <div style="padding:60px 0; text-align:center;">
+        <h1 class="headline" style="font-size:28px;" data-i18n="plan.notFoundTitle">Race not found</h1>
+        <p style="color:var(--steel); margin-top:12px;" data-i18n="plan.notFoundBody">That race weekend isn't on the calendar.</p>
+        <a href="calendar.html" class="btn" style="margin-top:20px;" data-i18n="plan.backToCalendar">Back to calendar →</a>
+      </div>`;
+    applyI18n();
+  } else {
+    document.title = `Plan ${race.name} | Formula Home`;
+    pkg.race = race;
+
+    const dateStr = fmtDate(race.start, race.end);
+    const flightDate = race.start;
+
+    const googleFlightsUrl = `https://www.google.com/travel/flights?q=Flights%20to%20${race.iata}%20on%20${flightDate}`;
+    const skyscannerUrl = `https://www.skyscanner.net/transport/flights-to/${race.iata.toLowerCase()}/?outboundDate=${flightDate}`;
+    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(race.circuit + ', ' + race.city + ', ' + race.country)}`;
+
+    const vCity = JSON.stringify({ city: race.city });
+    const vIata = JSON.stringify({ iata: race.iata });
+    const vCircuit = JSON.stringify({ circuit: race.circuit });
+
+    root.innerHTML = `
+      <div class="plan-head">
+        <a href="calendar.html" style="color:var(--steel); font-size:13px;" data-i18n="plan.back">← Back to calendar</a>
+        <div class="date" style="margin-top:16px;">${dateStr}</div>
+        <h1 class="headline">${race.name}</h1>
+        <div class="loc">${race.city}, ${race.country} · ${race.circuit}</div>
+        <div class="badges" style="display:flex; gap:6px; margin-top:14px;">
+          ${race.series.map(s => `<span style="font-size:10px; font-weight:700; letter-spacing:0.05em; padding:4px 9px; border-radius:5px; border:1px solid var(--red); color:#fff; background:rgba(227,21,31,0.15);">${s}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="plan-section">
+        <div class="eyebrow sec-eyebrow"><span class="dot"></span><span data-i18n="plan.getting">Getting there</span></div>
+        <h2 class="headline" style="font-size:clamp(22px,3vw,30px);" data-i18n="plan.gettingTitleTemplate" data-i18n-vars='${vCity}'>Best ways to reach ${race.city}</h2>
+        <p data-i18n="plan.gettingSubTemplate" data-i18n-vars='${vIata}'>Formula Home doesn't sell flights — we point you to the best comparison tools for the nearest airport (${race.iata}) so you can find your own price, then log it in the package below.</p>
+        <div class="travel-grid">
+          <div class="travel-card">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16l20-7-7 20-3-8-8-3z"/><path d="M14 10 5 19"/></svg></div>
+            <b data-i18n="plan.compareFlightsTitle">Compare flights</b>
+            <p data-i18n="plan.compareFlightsBodyTemplate" data-i18n-vars='${vIata}'>See every airline's price to ${race.iata} on Google Flights, sorted by price and duration.</p>
+            <a class="go" href="${googleFlightsUrl}" target="_blank" rel="noopener" data-i18n="plan.searchGoogleFlights">Search Google Flights →</a>
+          </div>
+          <div class="travel-card">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg></div>
+            <b data-i18n="plan.skyscannerTitle">Skyscanner</b>
+            <p data-i18n="plan.skyscannerBodyTemplate" data-i18n-vars='${vIata}'>Cross-check fares and set a price alert for the ${race.iata} route ahead of race week.</p>
+            <a class="go" href="${skyscannerUrl}" target="_blank" rel="noopener" data-i18n="plan.searchSkyscanner">Search Skyscanner →</a>
+          </div>
+          <div class="travel-card">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5-2V6l5-2 6 2 5-2v14l-5 2-6-2z"/><path d="M9 4v16M15 6v14"/></svg></div>
+            <b data-i18n="plan.drivingTitle">Driving & transit</b>
+            <p data-i18n="plan.drivingBody">Get door-to-door directions and public transit options straight to the circuit gate.</p>
+            <a class="go" href="${directionsUrl}" target="_blank" rel="noopener" data-i18n="plan.openMaps">Open in Google Maps →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-section">
+        <div class="eyebrow sec-eyebrow"><span class="dot"></span><span data-i18n="plan.staying">Where to stay</span></div>
+        <h2 class="headline" style="font-size:clamp(22px,3vw,30px);" data-i18n="plan.stayingTitleTemplate" data-i18n-vars='${vCircuit}'>Fan hosts near ${race.circuit}</h2>
+        <p data-i18n="plan.stayingSub">Real hosts within reach of the circuit, shown live on the map — like everyone waiting for their ride, but for a bed. Add one to your package below.</p>
+        <div class="stay-area">
+          <div id="plan-map"></div>
+          <div class="list-pane" id="list-pane">
+            <div class="empty-pane"><div class="spinner"></div><span data-i18n="plan.loadingHosts">Loading hosts near the circuit...</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-section">
+        <div class="eyebrow sec-eyebrow"><span class="dot"></span><span data-i18n="plan.doing">What to do</span></div>
+        <h2 class="headline" style="font-size:clamp(22px,3vw,30px);" data-i18n="plan.doingTitleTemplate" data-i18n-vars='${vCity}'>Motorsport things to do in ${race.city}</h2>
+        <p data-i18n="plan.doingSub">Beyond the grandstand — spots and activities any fan should know about for this race weekend.</p>
+        <div class="tips-list">
+          ${(race.tips || []).map(tip => `
+            <div class="tip-row">
+              <div class="flag">🏁</div>
+              <p>${tip}</p>
+            </div>
+          `).join('') || `<p style="color:var(--steel);" data-i18n="plan.noTips">No tips logged for this circuit yet.</p>`}
+        </div>
+      </div>
+
+      <div class="plan-section no-print">
+        <div class="eyebrow sec-eyebrow"><span class="dot"></span><span data-i18n="plan.pkgEyebrow">Your package</span></div>
+        <h2 class="headline" style="font-size:clamp(22px,3vw,30px);" data-i18n="plan.pkgTitle">Build your race weekend package</h2>
+        <p data-i18n="plan.pkgSub">This isn't a generic itinerary — it's built from the real hosts and dates on this page. Log what you find, and we'll put it together for you to save or share.</p>
+        <div class="pkg-box">
+          <div class="pkg-step" id="pkg-step-flight">
+            <div class="step-badge">1</div>
+            <div class="step-body">
+              <b data-i18n="plan.pkgFlightLabel">Flight</b>
+              <p data-i18n="plan.pkgFlightDesc">Search above, then log the best price you found.</p>
+              <div class="pkg-inline-row">
+                <input type="number" id="flight-price" min="0" placeholder="Price" data-i18n-placeholder="plan.pkgFlightPricePh" />
+                <select id="flight-currency">
+                  <option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option>
+                  <option value="ARS">ARS</option><option value="BRL">BRL</option><option value="MXN">MXN</option>
+                  <option value="JPY">JPY</option><option value="CNY">CNY</option>
+                </select>
+                <input type="text" id="flight-airline" placeholder="Airline (optional)" style="flex:1; min-width:140px;" data-i18n-placeholder="plan.pkgFlightAirlinePh" />
+                <button class="pkg-add-btn" id="add-flight-btn" data-i18n="plan.pkgAddFlight">Add to package</button>
+              </div>
+            </div>
+          </div>
+          <div class="pkg-step" id="pkg-step-stay">
+            <div class="step-badge">2</div>
+            <div class="step-body">
+              <b data-i18n="plan.pkgStayLabel">Stay</b>
+              <p id="stay-step-desc" data-i18n="plan.pkgStayDescDefault">Pick a host from the list above — click "Add to package" on their card.</p>
+            </div>
+          </div>
+          <div class="pkg-step done" id="pkg-step-dates">
+            <div class="step-badge">✓</div>
+            <div class="step-body">
+              <b data-i18n="plan.pkgDatesLabel">Dates</b>
+              <p data-i18n="plan.pkgDatesDescTemplate" data-i18n-vars='${JSON.stringify({dates:dateStr, race:race.name})}'>${dateStr} — ${race.name}, automatically included.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pkg-summary" id="pkg-summary">
+          <div class="row"><span data-i18n="plan.sumRaceWeekend">Race weekend</span><span id="sum-race"></span></div>
+          <div class="row"><span data-i18n="plan.sumDates">Dates</span><span id="sum-dates"></span></div>
+          <div class="row" id="sum-flight-row" style="display:none;"><span data-i18n="plan.sumFlight">Flight</span><span id="sum-flight"></span></div>
+          <div class="row" id="sum-host-row" style="display:none;"><span data-i18n="plan.sumStay">Stay</span><span id="sum-host"></span></div>
+          <div class="row total"><span data-i18n="plan.sumTotal">Estimated total</span><span id="sum-total"></span></div>
+          <div class="pkg-actions">
+            <button class="btn" id="share-btn" data-i18n="plan.shareBtn">Share via WhatsApp</button>
+            <button class="btn btn-ghost" id="print-btn" data-i18n="plan.printBtn">Save as PDF</button>
+          </div>
+        </div>
+      </div>
+    `;
+    applyI18n();
+
+    // ---------- map + hosts ----------
+    const map = L.map('plan-map').setView([race.lat, race.lng], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+    }).addTo(map);
+    L.marker([race.lat, race.lng], {
+      icon: L.divIcon({ className:'', html:'<div style="width:16px;height:16px;background:#e3151f;border:2px solid #fff;border-radius:50%;"></div>', iconSize:[16,16] })
+    }).addTo(map).bindPopup(`<b>${race.circuit}</b>`);
+
+    function haversine(lat1, lng1, lat2, lng2){
+      const R = 6371;
+      const dLat = (lat2-lat1) * Math.PI/180;
+      const dLng = (lng2-lng1) * Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+    function contactButton(h){
+      return `<a class="contact-btn" href="listing.html?id=${FH.esc(h.id)}">${FH.esc(t('p.se.viewDetails'))}</a>`;
+    }
+
+    let nearbyHosts = [];
+
+    async function renderHostList(){
+      const listPane = document.getElementById('list-pane');
+      const priced = await Promise.all(nearbyHosts.map(async h => {
+        const conv = await convertPrice(h.price_per_night, h.currency);
+        return { ...h, displayPrice: formatMoney(conv.amount, conv.currency) };
+      }));
+      listPane.innerHTML = priced.map(h => `
+        <div class="host-card ${pkg.host && pkg.host.id===h.id ? 'selected':''}" data-id="${h.id}">
+          <div class="row1">
+            <div><h4>${FH.esc(h.city)}${h.country ? ', ' + FH.esc(h.country) : ''}</h4><div class="dist">${h.dist.toFixed(0)} ${t('plan.kmFromCircuitSuffix')}</div></div>
+            <div class="price">${h.displayPrice}<span style="font-size:10px; color:var(--steel); font-weight:400;">/night</span></div>
+          </div>
+          ${h.description ? `<p class="desc">${FH.esc(h.description.slice(0,120))}${h.description.length>120?'…':''}</p>` : ''}
+          <div class="card-actions">
+            ${contactButton(h)}
+            <button class="add-btn" data-add-id="${h.id}">${pkg.host && pkg.host.id===h.id ? t('plan.added') : t('plan.addToPackage')}</button>
+          </div>
+        </div>
+      `).join('');
+
+      listPane.querySelectorAll('[data-add-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const h = nearbyHosts.find(x => x.id === btn.dataset.addId);
+          pkg.host = pkg.host && pkg.host.id === h.id ? null : h;
+          renderHostList();
+          updateSummary();
+        });
+      });
+    }
+    refreshHostPrices = renderHostList;
+
+    FH.initNav();
+    (async () => {
+      const { data, error } = await supabaseClient.from('hosts').select(FH.LISTING_COLS).eq('status','approved');
+      const listPane = document.getElementById('list-pane');
+      if(error){ listPane.innerHTML = `<div class="empty-pane"><p>${FH.esc(error.message)}</p></div>`; return; }
+
+      nearbyHosts = (data || [])
+        .map(h => ({ ...h, dist: haversine(race.lat, race.lng, h.lat, h.lng) }))
+        .filter(h => h.dist <= 120)
+        .sort((a,b) => a.dist - b.dist);
+
+      if(nearbyHosts.length === 0){
+        listPane.innerHTML = `
+          <div class="empty-pane">
+            <div style="width:40px;height:40px;border:1px solid var(--line-strong);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--steel)" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18"/><path d="M5 4h13l-2.5 4L18 12H5"/></svg>
+            </div>
+            <h3 style="color:#fff; font-size:15.5px;">${t('plan.noHostsTitleTemplate', { circuit: race.circuit })}</h3>
+            <p style="max-width:260px;">${t('plan.noHostsBody')}</p>
+            <a href="host-register.html" class="btn" style="margin-top:6px;">${t('foot.becomeHost')}</a>
+          </div>`;
+        return;
+      }
+
+      await renderHostList();
+      const markers = nearbyHosts.map(h => L.marker([h.lat, h.lng]).addTo(map).bindPopup(`<b>${FH.esc(h.city)}</b>`));
+      const group = L.featureGroup([...markers, L.marker([race.lat, race.lng])]);
+      map.fitBounds(group.getBounds().pad(0.4));
+    })();
+
+    // ---------- package builder logic ----------
+    document.getElementById('add-flight-btn').addEventListener('click', () => {
+      const price = parseFloat(document.getElementById('flight-price').value);
+      const currency = document.getElementById('flight-currency').value;
+      const airline = document.getElementById('flight-airline').value;
+      if(!price || price <= 0){ return; }
+      pkg.flight = { price, currency, airline };
+      document.getElementById('pkg-step-flight').classList.add('done');
+      document.getElementById('pkg-step-flight').querySelector('.step-badge').textContent = '✓';
+      updateSummary();
+    });
+
+    async function updateSummary(){
+      const summary = document.getElementById('pkg-summary');
+      if(!pkg.flight && !pkg.host){ summary.classList.remove('show'); return; }
+      summary.classList.add('show');
+
+      document.getElementById('sum-race').textContent = race.name;
+      document.getElementById('sum-dates').textContent = dateStr;
+
+      let total = 0;
+      const display = getDisplayCurrency();
+
+      if(pkg.flight){
+        const conv = await convertPrice(pkg.flight.price, pkg.flight.currency);
+        document.getElementById('sum-flight-row').style.display = 'flex';
+        document.getElementById('sum-flight').textContent = formatMoney(conv.amount, conv.currency) + (pkg.flight.airline ? ` (${pkg.flight.airline})` : '');
+        total += conv.amount;
+      } else {
+        document.getElementById('sum-flight-row').style.display = 'none';
+      }
+
+      if(pkg.host){
+        const conv = await convertPrice(pkg.host.price_per_night, pkg.host.currency);
+        document.getElementById('sum-host-row').style.display = 'flex';
+        document.getElementById('sum-host').textContent = `${formatMoney(conv.amount, conv.currency)}/night — ${pkg.host.city}`;
+        document.getElementById('stay-step-desc').textContent = t('plan.pkgStaySelectedTemplate', { city: pkg.host.city, price: formatMoney(conv.amount, conv.currency) });
+        document.getElementById('pkg-step-stay').classList.add('done');
+        document.getElementById('pkg-step-stay').querySelector('.step-badge').textContent = '✓';
+        total += conv.amount;
+      } else {
+        document.getElementById('sum-host-row').style.display = 'none';
+        document.getElementById('stay-step-desc').textContent = t('plan.pkgStayDescDefault');
+        document.getElementById('pkg-step-stay').classList.remove('done');
+        document.getElementById('pkg-step-stay').querySelector('.step-badge').textContent = '2';
+      }
+
+      document.getElementById('sum-total').textContent = formatMoney(Math.round(total), display) + ' ' + t('plan.sumTotalNote');
+    }
+    refreshPackageSummary = updateSummary;
+
+    document.getElementById('share-btn').addEventListener('click', () => {
+      let text = `🏁 My Formula Home package — ${race.name}\n${dateStr}\n${race.city}, ${race.country}\n`;
+      if(pkg.flight) text += `✈️ Flight: ${formatMoney(pkg.flight.price, pkg.flight.currency)}${pkg.flight.airline ? ' ('+pkg.flight.airline+')' : ''}\n`;
+      if(pkg.host) text += `🏠 Stay: ${pkg.host.city} host — ${formatMoney(pkg.host.price_per_night, pkg.host.currency)}/night\n`;
+      text += `\nPlanned with formula-home.com`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    });
+
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+  }
+</script>
+
+</body>
+</html>
