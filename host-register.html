@@ -81,8 +81,8 @@
     <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;"><span id="t1" data-i18n="p.reg.titleNew1">List your place</span><br/><span id="t2" data-i18n="p.reg.titleNew2">for race weekend</span></h1>
     <p data-i18n="p.reg.sub">Free to list.</p>
   </div>
-  <form id="host-form" class="form-shell" novalidate>
-    <div>
+  <form id="host-form" class="hf" novalidate>
+    <section class="hf-sec"><div class="hf-head"><span class="hf-n">1</span><div><h2 data-i18n="p.reg.s1">Your place</h2></div></div>
       <div class="field-group"><label data-i18n="p.reg.listingTitle">Listing title</label>
         <input type="text" name="title" required maxlength="100" data-i18n-placeholder="p.reg.listingTitlePh" /></div>
       <div class="field-row">
@@ -91,14 +91,18 @@
       </div>
       <div class="field-group"><label data-i18n="host.circuit">Nearest circuit / race weekend</label>
         <select name="circuit" id="circuit-select" required><option value="" data-i18n="host.circuitPlaceholder">Select a circuit...</option></select></div>
+    </section>
+    <section class="hf-sec"><div class="hf-head"><span class="hf-n">2</span><div><h2 data-i18n="p.reg.s2">Where is it?</h2></div></div>
       <div class="field-group"><label data-i18n="host.pinLabel">Pin your exact location on the map</label>
         <div id="map-picker"></div><div class="map-hint" id="map-hint" data-i18n="host.mapHintDefault"></div></div>
+    </section>
+    <section class="hf-sec"><div class="hf-head"><span class="hf-n">3</span><div><h2 data-i18n="p.reg.s3">Photos</h2></div></div>
       <div class="field-group"><label data-i18n="p.reg.photos">Photos</label>
         <div class="thumb-row" id="photo-row"></div>
         <input type="file" id="photo-input" accept="image/*" multiple hidden />
         <button type="button" class="btn btn-ghost btn-small" id="photo-btn" data-i18n="p.reg.addPhotos">Add photos</button></div>
-    </div>
-    <div>
+    </section>
+    <section class="hf-sec"><div class="hf-head"><span class="hf-n">4</span><div><h2 data-i18n="p.reg.s4">Price and details</h2></div></div>
       <div class="field-row">
         <div class="field-group"><label data-i18n="host.price">Price per night</label><input type="number" name="price" min="1" step="1" required /></div>
         <div class="field-group"><label data-i18n="host.currency">Currency</label>
@@ -109,9 +113,13 @@
         <div class="field-group"><label data-i18n="p.reg.minNights">Minimum nights</label><input type="number" name="min_nights" min="1" max="30" step="1" required value="1" /></div>
       </div>
       <div class="field-group"><label data-i18n="host.description">Description</label><textarea name="description" rows="5" maxlength="3000" required></textarea></div>
+    </section>
+    <section class="hf-sec"><div class="hf-head"><span class="hf-n">5</span><div><h2 data-i18n="p.reg.s5">Amenities and house rules</h2></div></div>
       <div class="field-group"><label data-i18n="p.reg.amenPick">What you offer</label><div class="chip-grid" id="amen-grid"></div></div>
       <div class="field-group"><label data-i18n="p.reg.rulesPick">House rules</label><div class="chip-grid" id="rules-grid"></div></div>
       <div class="field-group"><label data-i18n="p.reg.rulesOther">Anything else? (optional)</label><textarea name="house_rules" rows="2" maxlength="1500" data-i18n-placeholder="p.reg.rulesPh"></textarea></div>
+    </section>
+    <section class="hf-sec"><div class="hf-head"><span class="hf-n">6</span><div><h2 data-i18n="p.reg.s6">How guests reach you</h2></div></div>
       <p class="muted" style="margin:6px 0 14px" data-i18n="p.reg.privateNote"></p>
       <div class="field-group"><label data-i18n="host.contactMethod">Preferred contact method</label>
         <div class="radio-row" id="contact-method-group">
@@ -121,11 +129,11 @@
         </div></div>
       <div class="field-group"><label id="contact-value-label"></label><input type="text" name="contact_value" id="contact-value" required maxlength="120" /></div>
       <div class="field-group"><label data-i18n="p.reg.phone">Phone</label><input type="tel" name="phone" maxlength="40" /></div>
-      <div class="submit-row">
+    </section>
+      <div class="submit-row hf-submit">
         <button type="submit" class="btn" style="width:100%; justify-content:center;" id="submit-btn" data-i18n="p.reg.submitNew">Send for review</button>
         <div class="status-msg" id="status-msg" role="status"></div>
       </div>
-    </div>
   </form>
 
 </main>
@@ -151,11 +159,65 @@ const EDIT_ID = new URLSearchParams(location.search).get('id');
 let ME = null, PROFILE = null, EXISTING = null, PHOTOS = [], marker = null, hint = null;
 
 const circuitSelect = document.getElementById('circuit-select');
-RACES.slice().sort((a,b)=> new Date(a.start)-new Date(b.start)).forEach(r => {
+const SORTED_RACES = RACES.slice().sort((a,b)=> new Date(a.start)-new Date(b.start));
+function raceOpt(r, extra){
   const o = document.createElement('option'); o.value = r.circuit + ' — ' + r.name; o.dataset.lat = r.lat; o.dataset.lng = r.lng;
-  o.textContent = r.circuit + ' — ' + r.name + ' (' + r.city + ')'; circuitSelect.appendChild(o);
-});
-const oo = document.createElement('option'); oo.value = 'Other / not listed'; oo.dataset.lat = 0; oo.dataset.lng = 0; oo.setAttribute('data-i18n','host.circuitOther'); oo.textContent = 'Other / not listed'; circuitSelect.appendChild(oo);
+  o.textContent = r.circuit + ' — ' + r.name + ' (' + r.city + ')' + (extra || ''); return o;
+}
+function kmBetween(a, b, c, d){ const R = 6371, r = Math.PI / 180, dLa = (c - a) * r, dLo = (d - b) * r; const x = Math.sin(dLa/2)**2 + Math.cos(a*r) * Math.cos(c*r) * Math.sin(dLo/2)**2; return 2 * R * Math.asin(Math.sqrt(x)); }
+function otherOpt(){ const oo = document.createElement('option'); oo.value = 'Other / not listed'; oo.dataset.lat = 0; oo.dataset.lng = 0; oo.setAttribute('data-i18n','host.circuitOther'); oo.textContent = t('host.circuitOther'); return oo; }
+// near = [{r, km}] sorted by distance (or null for the plain list)
+function buildCircuits(near, keep){
+  circuitSelect.innerHTML = '';
+  const ph = document.createElement('option'); ph.value = ''; ph.setAttribute('data-i18n','host.circuitPlaceholder'); ph.textContent = t('host.circuitPlaceholder'); circuitSelect.appendChild(ph);
+  if(near && near.length){
+    const g = document.createElement('optgroup'); g.label = t('p.reg.nearHdr', { city: near.city || '' });
+    near.forEach(n => g.appendChild(raceOpt(n.r, n.km != null ? ' · ~' + Math.round(n.km) + ' km' : '')));
+    circuitSelect.appendChild(g);
+    const g2 = document.createElement('optgroup'); g2.label = t('p.reg.allHdr');
+    SORTED_RACES.filter(r => !near.some(n => n.r === r)).forEach(r => g2.appendChild(raceOpt(r)));
+    circuitSelect.appendChild(g2);
+  } else { SORTED_RACES.forEach(r => circuitSelect.appendChild(raceOpt(r))); }
+  circuitSelect.appendChild(otherOpt());
+  if(keep && [...circuitSelect.options].some(o => o.value === keep)) circuitSelect.value = keep;
+}
+buildCircuits(null);
+
+// ---- suggest circuits from city + country ----
+const cityIn = document.querySelector('input[name=city]'), countryIn = document.querySelector('input[name=country]');
+const circHint = document.createElement('div'); circHint.className = 'map-hint'; circHint.id = 'circ-hint'; circuitSelect.parentNode.appendChild(circHint);
+let geoTimer = null, geoSeq = 0, userPicked = false;
+circuitSelect.addEventListener('change', () => { userPicked = true; });
+const norm = x => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+function scheduleGeo(){ clearTimeout(geoTimer); geoTimer = setTimeout(suggestCircuits, 700); }
+async function suggestCircuits(){
+  const city = cityIn.value.trim(), country = countryIn.value.trim();
+  if(city.length < 2) return;
+  const my = ++geoSeq; let pt = null;
+  try {
+    const q = encodeURIComponent(city + (country ? ', ' + country : ''));
+    const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=en&q=' + q);
+    const j = await res.json(); if(j && j[0]) pt = { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon) };
+  } catch(e){}
+  if(my !== geoSeq) return;
+  let near = null;
+  if(pt){
+    near = SORTED_RACES.map(r => ({ r, km: kmBetween(pt.lat, pt.lng, r.lat, r.lng) })).sort((a, b) => a.km - b.km).filter((n, i) => n.km <= 600 || i < 3).slice(0, 5);
+    map.setView([pt.lat, pt.lng], 11);
+    if(!marker || (hint && hint.kind !== 'pin')){ setMarker(pt.lat, pt.lng); hint = { kind: 'pin', lat: pt.lat, lng: pt.lng }; updateHint(); }
+  } else if(country){
+    const m = SORTED_RACES.filter(r => norm(r.country) === norm(country)); if(m.length) near = m.map(r => ({ r, km: null }));
+  }
+  if(near){ near.city = city; }
+  buildCircuits(near, userPicked ? circuitSelect.value : '');
+  if(near && near.length){
+    const first = near[0];
+    const close = first.km == null || first.km <= 150;
+    if(close && !circuitSelect.value){ circuitSelect.value = first.r.circuit + ' — ' + first.r.name; }
+    circHint.textContent = (first.km != null && first.km > 600) ? t('p.reg.nearFar', { city }) : t('p.reg.nearFound', { n: near.filter(n => n.km == null || n.km <= 600).length, city });
+  } else { circHint.textContent = t('p.reg.nearNone', { city }); }
+}
+cityIn.addEventListener('input', scheduleGeo); countryIn.addEventListener('input', scheduleGeo);
 
 const map = L.map('map-picker').setView([30, 10], 2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
@@ -222,7 +284,7 @@ function setChips(name, arr){ const set = new Set(arr || []); document.querySele
     f.price.value = data.price_per_night || ''; f.currency.value = data.currency || 'USD'; f.capacity.value = data.capacity || 2; f.min_nights.value = data.min_nights || 1;
     f.description.value = data.description || ''; f.house_rules.value = data.house_rules || ''; setChips('amenities', data.amenities); setChips('rules', data.rules);
     if(![...circuitSelect.options].some(o => o.value === data.circuit)){ const o = document.createElement('option'); o.value = data.circuit; o.textContent = data.circuit; circuitSelect.appendChild(o); }
-    circuitSelect.value = data.circuit;
+    circuitSelect.value = data.circuit; userPicked = true;
     setMarker(data.lat, data.lng); map.setView([data.lat, data.lng], 12); hint = { kind: 'pin', lat: data.lat, lng: data.lng }; updateHint();
     PHOTOS = (data.photo_urls || []).map(u => ({ url: u, existing: true })); renderPhotos();
     const pr = await sb.from('host_private').select('contact_method, contact_value, phone').eq('host_id', EDIT_ID).maybeSingle();
