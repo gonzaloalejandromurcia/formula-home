@@ -131,6 +131,7 @@
       <select class="filter-select" id="sort-select">
         <option value="price-asc" data-i18n="search.sortPriceAsc">Price: low to high</option>
         <option value="price-desc" data-i18n="search.sortPriceDesc">Price: high to low</option>
+        <option value="rating" data-i18n="search.sortRating">Best rated</option>
         <option value="newest" data-i18n="search.sortNewest">Newest listings</option>
       </select>
     </div>
@@ -213,7 +214,7 @@
       <div class="host-card" data-id="${FH.esc(h.id)}">
         ${(h.photo_urls && h.photo_urls[0]) ? `<div class="ph" style="background-image:url('${FH.esc(h.photo_urls[0])}')"></div>` : `<div class="ph empty">🏁</div>`}
         <div class="body">
-          <h4>${FH.esc(h.title || (h.city + (h.country ? ', ' + h.country : '')))}</h4>
+          <div class="toprow"><h4>${FH.esc(h.title || (h.city + (h.country ? ', ' + h.country : '')))}</h4><div>${FH.ratingBadge(h.avg, h.n)}</div></div>
           <div class="city">📍 ${FH.esc(h.city)}${h.country ? ', ' + FH.esc(h.country) : ''}</div>
           <div class="circ">🏁 ${FH.esc(h.circuit)}</div>
           <div class="am">${(h.amenities || []).slice(0, 4).map(k => { const d = FH.AMENITIES.find(x => x[0] === k); return d ? `<span>${d[1]} ${FH.esc(t('ft.' + k))}</span>` : ''; }).join('')}${(h.amenities || []).length > 4 ? `<span>+${(h.amenities || []).length - 4}</span>` : ''}</div>
@@ -266,6 +267,7 @@
     let filtered = allHosts.filter(h => !circuit || h.circuit === circuit);
     if(sort === 'price-asc') filtered.sort((a,b) => a.price_per_night - b.price_per_night);
     if(sort === 'price-desc') filtered.sort((a,b) => b.price_per_night - a.price_per_night);
+    if(sort === 'rating') filtered.sort((a,b) => ((b.avg || 0) - (a.avg || 0)) || ((b.n || 0) - (a.n || 0)));
     if(sort === 'newest') filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     renderList(filtered);
     renderMarkers(filtered);
@@ -291,6 +293,8 @@
     }
 
     allHosts = data || [];
+    const RM = await FH.ratingMap();
+    allHosts.forEach(h => { const r = RM[h.id]; h.avg = r ? r.avg : 0; h.n = r ? r.n : 0; });
 
     const circuits = [...new Set(allHosts.map(h => h.circuit))];
     const sel = document.getElementById('circuit-filter');

@@ -156,6 +156,16 @@ const FH = (function(){
     return defs.filter(d => set.has(d[0])).map(d => '<span class="ft-chip"><span class="ft-ic">' + d[1] + '</span>' + esc(window.t ? window.t('ft.' + d[0]) : d[0]) + '</span>').join('');
   }
 
+  // rating helpers (1-5 scale, Booking-style label)
+  function ratingKey(avg){ return avg >= 4.5 ? 'p.rt.great' : avg >= 4 ? 'p.rt.verygood' : avg >= 3 ? 'p.rt.good' : 'p.rt.fair'; }
+  function ratingBadge(avg, n){
+    if(!n) return '<span class="rt-new">' + esc(window.t('p.rt.new')) + '</span>';
+    return '<span class="rt-badge"><span class="rt-score">' + Number(avg).toFixed(1) + '</span><span class="rt-txt"><b>' + esc(window.t(ratingKey(avg))) + '</b><small>' + esc(window.t('p.rt.count', { n })) + '</small></span></span>';
+  }
+  async function ratingMap(){
+    try { const r = await sb.rpc('host_rating_summary'); const m = {}; (r.data || []).forEach(x => { m[x.host_id] = { avg: Number(x.avg_rating), n: x.review_count }; }); return m; } catch(e){ return {}; }
+  }
+
   // contact details as safe HTML (method/value of a host, or email/phone of a guest)
   function contactHtml(c){
     if(!c) return '';
@@ -174,5 +184,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips };
+  return { initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
 })();

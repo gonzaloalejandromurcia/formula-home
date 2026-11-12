@@ -304,3 +304,21 @@ footer{ padding:44px 0 30px; }
 .radio-pill{ position:relative; cursor:pointer; padding:10px 18px; border:1px solid var(--line-strong); border-radius:999px; font-size:14px; color:#d4d4d8; background:var(--panel); user-select:none; }
 .radio-pill input{ position:absolute; opacity:0; pointer-events:none; }
 .radio-pill.active{ border-color:var(--red); background:rgba(226,10,22,.14); color:#fff; }
+
+/* ratings + reviews */
+.rt-badge{ display:inline-flex; align-items:center; gap:9px; }
+.rt-score{ background:var(--red); color:#fff; font-family:'Oswald',sans-serif; font-weight:700; font-size:16px; min-width:38px; height:34px; padding:0 8px; display:inline-flex; align-items:center; justify-content:center; border-radius:9px 9px 9px 2px; }
+.rt-txt{ display:flex; flex-direction:column; line-height:1.15; text-align:left; }
+.rt-txt b{ font-size:13px; } .rt-txt small{ font-size:11.5px; color:var(--steel,#a1a1aa); }
+.rt-new{ font-size:11.5px; border:1px solid var(--line-strong); border-radius:999px; padding:3px 10px; color:#d4d4d8; }
+.rv-sum{ display:flex; gap:26px; flex-wrap:wrap; align-items:center; padding-bottom:16px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+.rv-big{ text-align:center; min-width:96px; } .rv-big .n{ font-family:'Oswald',sans-serif; font-weight:700; font-size:46px; line-height:1; }
+.rv-big .st{ color:#facc15; letter-spacing:2px; font-size:15px; margin-top:6px; } .rv-big small{ display:block; color:var(--steel,#a1a1aa); font-size:12px; margin-top:4px; }
+.rv-bars{ flex:1; min-width:200px; display:flex; flex-direction:column; gap:6px; }
+.rv-bar{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:#d4d4d8; }
+.rv-bar .tr{ flex:1; height:7px; background:#1f1f23; border-radius:99px; overflow:hidden; } .rv-bar .tr i{ display:block; height:100%; background:#facc15; border-radius:99px; } .rv-bar .c{ width:24px; text-align:right; color:var(--steel,#a1a1aa); }
+.rv-card{ display:flex; gap:14px; padding:16px 0; border-top:1px solid var(--line); } .rv-sum + .rv-card{ border-top:none; }
+.rv-av{ flex:none; width:42px; height:42px; border-radius:50%; background:#26262b; display:flex; align-items:center; justify-content:center; font-family:'Oswald',sans-serif; font-weight:600; font-size:17px; }
+.rv-main{ flex:1; min-width:0; } .rv-top{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; } .rv-top b{ font-size:14.5px; } .rv-top .d{ color:var(--steel,#a1a1aa); font-size:12.5px; }
+.rv-stars{ color:#facc15; letter-spacing:1px; font-size:13px; margin-top:2px; } .rv-text{ margin-top:8px; font-size:14.5px; line-height:1.55; white-space:pre-line; }
+.host-card .toprow{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }

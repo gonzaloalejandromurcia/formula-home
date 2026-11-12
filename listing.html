@@ -201,14 +201,19 @@ async function submitBooking(e){
 }
 
 async function loadReviews(){
-  const { data } = await sb.from('reviews').select('rating, comment, guest_name, created_at').eq('host_id', ID).order('created_at', { ascending: false }).limit(50);
+  const { data } = await sb.from('reviews').select('rating, comment, guest_name, created_at').eq('host_id', ID).order('created_at', { ascending: false }).limit(100);
   const box = document.getElementById('reviews'); if(!box) return;
   const list = data || [];
   if(!list.length){ box.innerHTML = '<p class="muted">' + FH.esc(t('p.ls.noReviews')) + '</p>'; return; }
   const avg = list.reduce((s, r) => s + r.rating, 0) / list.length;
-  window.__ratingHtml = '<span class="rt" style="color:#facc15">★ ' + avg.toFixed(1) + '</span> <span class="muted">(' + list.length + ')</span>';
+  window.__ratingHtml = FH.ratingBadge(avg, list.length);
   document.getElementById('rating-line').innerHTML = window.__ratingHtml;
-  box.innerHTML = list.map(r => '<div class="review"><span class="who">' + FH.esc((r.guest_name || '').split(' ')[0]) + '</span> <span class="rt">' + '★'.repeat(r.rating) + '</span> <span class="muted">· ' + FH.esc(FH.fmtD(r.created_at.slice(0, 10))) + '</span>' + (r.comment ? '<div>' + FH.esc(r.comment) + '</div>' : '') + '</div>').join('');
+  const dist = [5, 4, 3, 2, 1].map(n => ({ n, c: list.filter(r => r.rating === n).length }));
+  const stars = n => '★'.repeat(n) + '<span style="opacity:.25">' + '★'.repeat(5 - n) + '</span>';
+  box.innerHTML =
+    '<div class="rv-sum"><div class="rv-big"><div class="n">' + avg.toFixed(1) + '</div><div class="st">' + stars(Math.round(avg)) + '</div><small>' + FH.esc(t('p.rt.based', { n: list.length })) + '</small></div>' +
+    '<div class="rv-bars">' + dist.map(d => '<div class="rv-bar"><span>' + d.n + ' ★</span><span class="tr"><i style="width:' + Math.round(d.c * 100 / list.length) + '%"></i></span><span class="c">' + d.c + '</span></div>').join('') + '</div></div>' +
+    list.map(r => { const nm = (r.guest_name || '').split(' ')[0] || '?'; return '<div class="rv-card"><div class="rv-av">' + FH.esc(nm.charAt(0).toUpperCase()) + '</div><div class="rv-main"><div class="rv-top"><b>' + FH.esc(nm) + '</b><span class="d">' + FH.esc(FH.fmtD(r.created_at.slice(0, 10))) + '</span></div><div class="rv-stars">' + stars(r.rating) + '</div>' + (r.comment ? '<div class="rv-text">' + FH.esc(r.comment) + '</div>' : '') + '</div></div>'; }).join('');
 }
 
 </script>
