@@ -71,7 +71,10 @@ const FH = (function(){
   async function _trackData(circuit){
     if(_trackCache[circuit]) return _trackCache[circuit];
     const file = (window.TRACK_FILES || {})[circuit];
-    const r = await fetch('https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(file));
+    const meta = await (await fetch('https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&format=json&origin=*&titles=' + encodeURIComponent('File:' + file))).json();
+    const page = Object.values(meta.query.pages)[0];
+    if(!page.imageinfo) throw new Error('no file');
+    const r = await fetch(page.imageinfo[0].url);
     if(!r.ok) throw new Error('track ' + r.status);
     const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
     const ps = [].slice.call(doc.querySelectorAll('path'));
