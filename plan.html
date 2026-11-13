@@ -81,6 +81,12 @@
     body{ background:#fff; color:#000; }
     .pkg-box{ border-color:#000; }
   }
+  .stay-area{ border:none; border-radius:0; display:block; }
+  .stay-area .list-pane{ border-left:none; padding:0; max-height:none; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .stay-area .empty-pane{ grid-column:1/-1; }
+  .host-card .ph2{ height:150px; margin:-16px -16px 12px; background:#17171a center/cover no-repeat; border-radius:10px 10px 0 0; position:relative; }
+  .host-card .ph2 .tag{ position:absolute; left:10px; top:10px; background:#f5c542; color:#111; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+  .host-card{ overflow:hidden; }
 </style>
 </head>
 <body>
@@ -268,9 +274,8 @@
       <div class="plan-section">
         <div class="eyebrow sec-eyebrow"><span class="dot"></span><span data-i18n="plan.staying">Where to stay</span></div>
         <h2 class="headline" style="font-size:clamp(22px,3vw,30px);" data-i18n="plan.stayingTitleTemplate" data-i18n-vars='${vCircuit}'>Fan hosts near ${race.circuit}</h2>
-        <p data-i18n="plan.stayingSub">Real hosts within reach of the circuit, shown live on the map — like everyone waiting for their ride, but for a bed. Add one to your package below.</p>
+        <p data-i18n="p.plan.staySub">Fan hosts close to the circuit. Open any listing on the map when one catches your eye, and add it to your package below.</p>
         <div class="stay-area">
-          <div id="plan-map"></div>
           <div class="list-pane" id="list-pane">
             <div class="empty-pane"><div class="spinner"></div><span data-i18n="plan.loadingHosts">Loading hosts near the circuit...</span></div>
           </div>
@@ -345,14 +350,6 @@
     applyI18n();
 
     // ---------- map + hosts ----------
-    const map = L.map('plan-map').setView([race.lat, race.lng], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
-    }).addTo(map);
-    L.marker([race.lat, race.lng], {
-      icon: L.divIcon({ className:'', html:'<div style="width:16px;height:16px;background:#e3151f;border:2px solid #fff;border-radius:50%;"></div>', iconSize:[16,16] })
-    }).addTo(map).bindPopup(`<b>${race.circuit}</b>`);
-
     function haversine(lat1, lng1, lat2, lng2){
       const R = 6371;
       const dLat = (lat2-lat1) * Math.PI/180;
@@ -374,6 +371,7 @@
       }));
       listPane.innerHTML = priced.map(h => `
         <div class="host-card ${pkg.host && pkg.host.id===h.id ? 'selected':''}" data-id="${h.id}">
+          ${(h.photo_urls && h.photo_urls[0]) ? `<div class="ph2" style="background-image:url('${FH.esc(h.photo_urls[0])}')">${h.is_demo ? `<span class="tag">${FH.esc(t('p.demo.tag'))}</span>` : ''}</div>` : ''}
           <div class="row1">
             <div><h4>${FH.esc(h.city)}${h.country ? ', ' + FH.esc(h.country) : ''}</h4><div class="dist">${h.dist.toFixed(0)} ${t('plan.kmFromCircuitSuffix')}</div></div>
             <div class="price">${h.displayPrice}<span style="font-size:10px; color:var(--steel); font-weight:400;">/night</span></div>
@@ -381,11 +379,18 @@
           ${h.description ? `<p class="desc">${FH.esc(h.description.slice(0,120))}${h.description.length>120?'…':''}</p>` : ''}
           <div class="card-actions">
             ${contactButton(h)}
+            <button class="add-btn" data-map-id="${h.id}">📍 ${FH.esc(t('p.se.seeMap'))}</button>
             <button class="add-btn" data-add-id="${h.id}">${pkg.host && pkg.host.id===h.id ? t('plan.added') : t('plan.addToPackage')}</button>
           </div>
         </div>
       `).join('');
 
+      listPane.querySelectorAll('[data-map-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const h = nearbyHosts.find(x => x.id === btn.dataset.mapId);
+          FH.showMap({ lat: h.lat, lng: h.lng, title: h.title || h.city, circuit: { lat: race.lat, lng: race.lng, circuit: race.circuit } });
+        });
+      });
       listPane.querySelectorAll('[data-add-id]').forEach(btn => {
         btn.addEventListener('click', () => {
           const h = nearbyHosts.find(x => x.id === btn.dataset.addId);
@@ -399,7 +404,9 @@
 
     FH.initNav();
     (async () => {
-      const { data, error } = await supabaseClient.from('hosts').select(FH.LISTING_COLS).eq('status','approved').eq('is_demo', false);
+      let q = supabaseClient.from('hosts').select(FH.LISTING_COLS).eq('status','approved');
+      if(!FH.demoOn()) q = q.eq('is_demo', false);
+      const { data, error } = await q;
       const listPane = document.getElementById('list-pane');
       if(error){ listPane.innerHTML = `<div class="empty-pane"><p>${FH.esc(error.message)}</p></div>`; return; }
 
@@ -422,9 +429,6 @@
       }
 
       await renderHostList();
-      const markers = nearbyHosts.map(h => L.marker([h.lat, h.lng]).addTo(map).bindPopup(`<b>${FH.esc(h.city)}</b>`));
-      const group = L.featureGroup([...markers, L.marker([race.lat, race.lng])]);
-      map.fitBounds(group.getBounds().pad(0.4));
     })();
 
     // ---------- package builder logic ----------

@@ -51,6 +51,11 @@
   .leaflet-popup-content-wrapper{ background:#0a0a0a; color:#fff; border-radius:8px; }
   .leaflet-popup-tip{ background:#0a0a0a; }
   .popup-content b{ font-family:'Oswald',sans-serif; font-style:italic; }
+  .stay-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+  .stay-grid .empty-pane, .stay-grid .loading-pane{ grid-column:1/-1; }
+  .stay-grid .host-card{ flex-direction:column; }
+  .stay-grid .host-card .ph{ flex:none; height:210px; min-height:0; }
+  .stay-grid .host-card .toprow{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 </style>
 </head>
 <body>
@@ -137,11 +142,8 @@
     </div>
   </div>
 
-  <div class="results-area">
-    <div id="map"></div>
-    <div class="list-pane" id="list-pane">
-      <div class="loading-pane"><div class="spinner"></div><span data-i18n="search.loadingResultsMap">Loading results and map...</span></div>
-    </div>
+  <div class="stay-grid" id="list-pane">
+    <div class="loading-pane"><div class="spinner"></div><span data-i18n="search.loadingResultsMap">Loading results and map...</span></div>
   </div>
 </main>
 
@@ -178,14 +180,7 @@
     if(typeof onCurrencyChange === 'function') onCurrencyChange();
   }); });
 
-  const map = L.map('map').setView([30, 10], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 18
-  }).addTo(map);
-
   let allHosts = [];
-  let markers = [];
 
   async function renderList(hosts){
     const listPane = document.getElementById('list-pane');
@@ -230,7 +225,7 @@
       card.addEventListener('click', (e) => {
         const mb = e.target.closest('[data-map]');
         const id = card.dataset.id;
-        if(mb){ const h = hosts.find(x => x.id === id); if(h){ map.setView([h.lat, h.lng], 12); openPopupFor(id); } return; }
+        if(mb){ const h = hosts.find(x => x.id === id); if(h){ FH.showMap({ lat: h.lat, lng: h.lng, title: h.title || h.city, circuit: FH.circuitOf(h.circuit) }); } return; }
         location.href = 'listing.html?id=' + encodeURIComponent(id);
       });
     });
@@ -238,27 +233,6 @@
 
   function contactButton(h){
     return `<a class="contact-btn" href="listing.html?id=${FH.esc(h.id)}">${FH.esc(t('p.se.viewDetails'))}</a>`;
-  }
-
-  function openPopupFor(id){
-    const m = markers.find(x => x.hostId === id);
-    if(m) m.openPopup();
-  }
-
-  async function renderMarkers(hosts){
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-    for(const h of hosts){
-      const conv = await convertPrice(h.price_per_night, h.currency);
-      const m = L.marker([h.lat, h.lng]).addTo(map);
-      m.hostId = h.id;
-      m.bindPopup(`<div class="popup-content"><b>${FH.esc(h.city)}</b><br/>${formatMoney(conv.amount, conv.currency)}/night · ${FH.esc(h.circuit)}<br/><a href="listing.html?id=${FH.esc(h.id)}">${FH.esc(t('p.se.viewDetails'))}</a></div>`);
-      markers.push(m);
-    }
-    if(hosts.length > 0){
-      const group = L.featureGroup(markers);
-      map.fitBounds(group.getBounds().pad(0.3));
-    }
   }
 
   function applyFiltersAndRender(){
@@ -270,7 +244,6 @@
     if(sort === 'rating') filtered.sort((a,b) => ((b.avg || 0) - (a.avg || 0)) || ((b.n || 0) - (a.n || 0)));
     if(sort === 'newest') filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     renderList(filtered);
-    renderMarkers(filtered);
   }
   function onCurrencyChange(){ applyFiltersAndRender(); }
   function onLangChange(){ applyFiltersAndRender(); }
@@ -306,6 +279,7 @@
       sel.appendChild(opt);
     });
 
+    const cp = new URLSearchParams(location.search).get('circuit'); if(cp && circuits.includes(cp)) sel.value = cp;
     applyFiltersAndRender();
   })();
 </script>

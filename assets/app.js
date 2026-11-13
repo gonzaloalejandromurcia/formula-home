@@ -10,6 +10,30 @@ const FH = (function(){
   const sb = supabaseClient;
   const KNOWN = ['not_authenticated','listing_unavailable','own_listing','past_dates','bad_dates','too_long','min_nights','bad_guests','no_price','dates_blocked','dates_taken','duplicate_request','too_many_requests','forbidden','bad_state','not_found','not_accepted','not_completed','bad_rating','already_reviewed','bad_action','status_locked','not_paid','already_paid','pay_expired','no_listing','unknown_country'];
 
+  function circuitOf(name){ try{ return (window.RACES || []).find(r => r.circuit === name) || null; }catch(e){ return null; } }
+  // Opens a map only on demand (modal) centred on one listing, with its circuit marked.
+  function showMap(o){
+    if(!window.L) return;
+    const ov = document.createElement('div'); ov.className = 'map-modal';
+    ov.innerHTML = '<div class="map-box" role="dialog" aria-modal="true"><button class="map-close" type="button" aria-label="Close">×</button><div class="map-title"></div><div class="map-canvas"></div></div>';
+    ov.querySelector('.map-title').textContent = o.title || '';
+    document.body.appendChild(ov);
+    let m = null;
+    const onKey = (e) => { if(e.key === 'Escape') close(); };
+    function close(){ document.removeEventListener('keydown', onKey); if(m) m.remove(); ov.remove(); }
+    ov.addEventListener('click', (e) => { if(e.target === ov || e.target.closest('.map-close')) close(); });
+    document.addEventListener('keydown', onKey);
+    m = L.map(ov.querySelector('.map-canvas')).setView([o.lat, o.lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(m);
+    L.marker([o.lat, o.lng]).addTo(m).bindPopup(esc(o.title || '')).openPopup();
+    const c = o.circuit;
+    if(c && c.lat != null){
+      L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div style="width:16px;height:16px;background:#e3151f;border:2px solid #fff;border-radius:50%;"></div>', iconSize: [16, 16] }) }).addTo(m).bindPopup('<b>' + esc(c.circuit || c.name || '') + '</b>');
+      m.fitBounds(L.latLngBounds([[o.lat, o.lng], [c.lat, c.lng]]).pad(0.4));
+    }
+    setTimeout(() => m.invalidateSize(), 60);
+  }
+
   function demoOn(){
     try{
       const q = new URLSearchParams(location.search).get('demo');
@@ -213,5 +237,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
+  return { showMap, circuitOf, demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
 })();

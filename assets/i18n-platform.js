@@ -94,6 +94,7 @@
     'p.host.since': ['Host since', 'Anfitrión desde'],
     'p.host.langs': ['Speaks', 'Habla'],
     'p.host.reviews': ['reviews', 'opiniones'],
+    'p.plan.staySub': ['Fan hosts close to the circuit. Open any listing on the map when one catches your eye, and add it to your package below.', 'Anfitriones cerca del circuito. Abrí cualquier casa en el mapa cuando una te interese y sumala a tu paquete más abajo.'],
     'p.acc.nights': ['nights', 'noches'],
     'p.acc.total': ['Total', 'Total'],
     'p.acc.verifyEmail': ['Email', 'Email'],
