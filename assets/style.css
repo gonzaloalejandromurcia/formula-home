@@ -368,3 +368,10 @@ footer{ padding:44px 0 30px; }
 }
 .track-panel .tp-c{ font-size:10px; color:var(--steel); opacity:.7; text-decoration:none; margin-top:2px; }
 .track-panel .tp-c:hover{ opacity:1; text-decoration:underline; }
+
+/* show/hide password */
+.pw-wrap{ position:relative; }
+.pw-wrap input{ padding-right:48px !important; }
+.pw-eye{ position:absolute; right:6px; top:50%; transform:translateY(-50%); width:38px; height:38px; display:flex; align-items:center; justify-content:center; background:none; border:0; color:var(--steel); cursor:pointer; border-radius:8px; }
+.pw-eye:hover{ color:#fff; }
+.pw-eye:focus-visible{ outline:2px solid var(--red); }

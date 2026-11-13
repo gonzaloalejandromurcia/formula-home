@@ -97,6 +97,24 @@ const FH = (function(){
     });
   }
 
+
+  // Show/hide toggle (eye) on every password field.
+  function addPwToggles(root){
+    [].slice.call((root || document).querySelectorAll('input[type="password"]:not([data-pwt])')).forEach(inp => {
+      inp.setAttribute('data-pwt', '1');
+      const wrap = document.createElement('div'); wrap.className = 'pw-wrap';
+      inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pw-eye';
+      const eye = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const off = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a18.5 18.5 0 0 1 5.1-5.9M9.9 4.2A10.7 10.7 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M1 1l22 22"/></svg>';
+      const set = (show) => { inp.type = show ? 'text' : 'password'; b.innerHTML = show ? off : eye; b.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); b.setAttribute('aria-pressed', show ? 'true' : 'false'); };
+      set(false);
+      b.addEventListener('click', () => { set(inp.type === 'password'); inp.focus(); });
+      wrap.appendChild(b);
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => addPwToggles()); else addPwToggles();
+
   // Calls the "payments" Edge Function (Stripe). Returns { data, error }.
   async function pay(action, extra){
     const { data, error } = await sb.functions.invoke('payments', { body: Object.assign({ action }, extra || {}) });
@@ -291,5 +309,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { trackPanel, hydrateTracks, showMap, circuitOf, demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
+  return { addPwToggles, trackPanel, hydrateTracks, showMap, circuitOf, demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
 })();
