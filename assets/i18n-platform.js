@@ -231,6 +231,10 @@
     'p.ad.none': ['Nothing here.', 'No hay nada aquí.'],
     'p.ad.owner': ['Owner', 'Dueño'],
     'p.ad.legacy': ['Legacy (no account)', 'Anterior (sin cuenta)'],
+    // legal
+    'p.legal': ['Terms & legal notice', 'Términos y aviso legal'],
+    'p.legal.book': ['By sending a request you accept the Terms & legal notice.', 'Al enviar la solicitud aceptás los Términos y aviso legal.'],
+    'p.legal.host': ['By publishing you accept the Terms & legal notice and confirm your place complies with local laws.', 'Al publicar aceptás los Términos y aviso legal y confirmás que tu alojamiento cumple las leyes locales.'],
     // payments (Stripe)
     'pay.st.unpaid': ['Payment pending', 'Pago pendiente'],
     'pay.st.pending': ['Payment in progress', 'Pago en proceso'],

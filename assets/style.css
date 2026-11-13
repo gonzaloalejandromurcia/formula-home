@@ -330,3 +330,8 @@ footer{ padding:44px 0 30px; }
 .b-pay-refunded{ border-color:#1e3a8a; color:#93c5fd; }
 .b-pay-failed{ border-color:#7f1d1d; color:#f87171; }
 .badges{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+
+/* ===== Legal ===== */
+.foot-legal{ margin-top:8px; font-size:12px; } .foot-legal a{ color:var(--steel,#9ca3af); text-decoration:underline; }
+.legal h3{ margin:26px 0 8px; } .legal p, .legal li{ color:#d4d4d8; line-height:1.65; font-size:14.5px; margin-bottom:10px; }
+.legal ul{ padding-left:20px; } .legal a{ text-decoration:underline; }

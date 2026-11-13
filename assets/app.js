@@ -1,4 +1,11 @@
 // Formula Home — shared platform helpers (auth state, nav, messages thread, formatting)
+// legal link under every footer (app.js loads at the end of <body> on every page)
+(function(){
+  document.querySelectorAll('.foot-bottom').forEach(function(fb){
+    if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('foot-legal')) return;
+    fb.insertAdjacentHTML('afterend', '<div class="foot-legal"><a href="legal.html" data-i18n="p.legal">Terms &amp; legal notice</a></div>');
+  });
+})();
 const FH = (function(){
   const sb = supabaseClient;
   const KNOWN = ['not_authenticated','listing_unavailable','own_listing','past_dates','bad_dates','too_long','min_nights','bad_guests','no_price','dates_blocked','dates_taken','duplicate_request','too_many_requests','forbidden','bad_state','not_found','not_accepted','not_completed','bad_rating','already_reviewed','bad_action','status_locked','not_paid','already_paid','pay_expired','no_listing','unknown_country'];

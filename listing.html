@@ -135,6 +135,7 @@ function render(){
       '<button class="btn" type="submit" id="book-btn" style="width:100%; justify-content:center;">' + FH.esc(ME ? t('p.ls.send') : t('p.ls.loginToBook')) + '</button>' +
       '<div class="status-msg" id="book-msg" role="status"></div>' +
       '<p class="muted" style="margin-top:10px;font-size:12.5px">' + FH.esc(t('p.ls.note')) + '</p>' +
+      '<p class="muted" style="margin-top:6px;font-size:12px"><a href="legal.html" target="_blank" style="text-decoration:underline">' + FH.esc(t('p.legal.book')) + '</a></p>' +
     '</form>';
   const busyTxt = BUSY.length ? '<div class="busy-list"><b>' + FH.esc(t('p.ls.busy')) + ':</b> ' + BUSY.map(k => FH.esc(FH.fmtD(k.start_date)) + ' → ' + FH.esc(FH.fmtD(k.end_date))).join(' · ') + '</div>' : '';
   const keepForm = document.getElementById('book-form');

@@ -45,7 +45,9 @@ async function onboard(user: { id: string; email?: string }) {
   if (!rows.length) return json({ error: "no_listing" }, 400);
   let acct = rows.find((r) => r.p?.stripe_account_id)?.p?.stripe_account_id as string | undefined;
   if (!acct) {
-    const country = countryCode(rows[0].country);
+    // Test mode: every host is set up as a US test account so anyone, from any country, can try the full flow.
+    const testMode = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").startsWith("sk_test_");
+    const country = testMode ? "US" : countryCode(rows[0].country);
     if (!country) return json({ error: "unknown_country" }, 400);
     const a = await stripe.accounts.create({
       type: "express",
