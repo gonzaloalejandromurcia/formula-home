@@ -29,7 +29,7 @@ const FH = (function(){
     const c = o.circuit;
     if(c && c.lat != null){
       L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div style="width:16px;height:16px;background:#e3151f;border:2px solid #fff;border-radius:50%;"></div>', iconSize: [16, 16] }) }).addTo(m).bindPopup('<b>' + esc(c.circuit || c.name || '') + '</b>');
-      m.fitBounds(L.latLngBounds([[o.lat, o.lng], [c.lat, c.lng]]).pad(0.4));
+      m.fitBounds(L.latLngBounds([[o.lat, o.lng], [c.lat, c.lng]]).pad(0.4), { maxZoom: 14 });
     }
     setTimeout(() => m.invalidateSize(), 60);
   }
@@ -37,10 +37,10 @@ const FH = (function(){
   function demoOn(){
     try{
       const q = new URLSearchParams(location.search).get('demo');
-      if(q === '1') sessionStorage.setItem('fh_demo', '1');
-      if(q === '0') sessionStorage.removeItem('fh_demo');
-      return sessionStorage.getItem('fh_demo') === '1';
-    }catch(e){ return new URLSearchParams(location.search).get('demo') === '1'; }
+      if(q === '1') sessionStorage.removeItem('fh_demo');
+      if(q === '0') sessionStorage.setItem('fh_demo', '0');
+      return sessionStorage.getItem('fh_demo') !== '0';
+    }catch(e){ return new URLSearchParams(location.search).get('demo') !== '0'; }
   }
 
   // Calls the "payments" Edge Function (Stripe). Returns { data, error }.
