@@ -3,7 +3,7 @@
 (function(){
   document.querySelectorAll('.foot-bottom').forEach(function(fb){
     if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('foot-legal')) return;
-    fb.insertAdjacentHTML('afterend', '<div class="foot-legal"><a href="legal.html" data-i18n="p.legal">Terms &amp; legal notice</a></div>');
+    fb.insertAdjacentHTML('afterend', '<div class="foot-legal"><a href="legal.html" data-i18n="p.legal">Terms &amp; legal notice</a> · <a href="privacy.html" data-i18n="p.privacy">Privacy policy</a></div>');
   });
 })();
 const FH = (function(){
