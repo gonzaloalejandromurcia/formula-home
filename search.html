@@ -212,7 +212,7 @@
 
     listPane.innerHTML = priced.map(h => `
       <div class="host-card" data-id="${FH.esc(h.id)}">
-        ${(h.photo_urls && h.photo_urls[0]) ? `<div class="ph" style="background-image:url('${FH.esc(h.photo_urls[0])}')"></div>` : `<div class="ph empty">🏁</div>`}
+        ${(h.photo_urls && h.photo_urls[0]) ? `<div class="ph" style="background-image:url('${FH.esc(h.photo_urls[0])}')">${h.is_demo ? `<span class="tag" style="background:#f5c542;color:#111;font-weight:700">${FH.esc(t('p.demo.tag'))}</span>` : ''}</div>` : `<div class="ph empty">🏁</div>`}
         <div class="body">
           <div class="toprow"><h4>${FH.esc(h.title || (h.city + (h.country ? ', ' + h.country : '')))}</h4><div>${FH.ratingBadge(h.avg, h.n)}</div></div>
           <div class="city">📍 ${FH.esc(h.city)}${h.country ? ', ' + FH.esc(h.country) : ''}</div>
@@ -280,11 +280,13 @@
 
   FH.initNav();
   (async () => {
-    const { data, error } = await supabaseClient
+    let q = supabaseClient
       .from('hosts')
       .select(FH.LISTING_COLS)
       .eq('status', 'approved')
       .order('created_at', { ascending:false });
+    if(!FH.demoOn()) q = q.eq('is_demo', false);
+    const { data, error } = await q;
 
     if(error){
       document.getElementById('results-count').textContent = t('search.loadError');

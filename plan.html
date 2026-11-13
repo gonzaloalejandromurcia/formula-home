@@ -399,7 +399,7 @@
 
     FH.initNav();
     (async () => {
-      const { data, error } = await supabaseClient.from('hosts').select(FH.LISTING_COLS).eq('status','approved');
+      const { data, error } = await supabaseClient.from('hosts').select(FH.LISTING_COLS).eq('status','approved').eq('is_demo', false);
       const listPane = document.getElementById('list-pane');
       if(error){ listPane.innerHTML = `<div class="empty-pane"><p>${FH.esc(error.message)}</p></div>`; return; }
 

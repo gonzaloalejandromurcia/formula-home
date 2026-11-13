@@ -115,6 +115,15 @@ window.onCurrencyChange = () => { updateTotal(); };
   loadReviews();
 })();
 
+function hostCard(){
+  const nm = H.name || ''; if(!nm) return '';
+  const av = H.host_photo ? '<img src="' + FH.esc(H.host_photo) + '" alt="">' : FH.esc(nm.charAt(0).toUpperCase());
+  const langs = (H.host_langs || []).length ? '<div class="sub">' + FH.esc(t('p.host.langs')) + ': ' + FH.esc(H.host_langs.join(', ')) + '</div>' : '';
+  const since = H.host_since ? '<div class="sub">' + FH.esc(t('p.host.since')) + ' ' + H.host_since + '</div>' : '';
+  return '<div class="panel"><h3>' + FH.esc(t('p.host.title')) + '</h3><div class="host-box"><div class="host-av">' + av + '</div><div><b>' + FH.esc(nm) + '</b>' + (H.is_demo ? ' <span class="demo-tag">' + FH.esc(t('p.demo.tag')) + '</span>' : '') + since + langs + '<div id="host-rating" class="sub">' + FH.esc(window.__hostRatingTxt || '') + '</div></div></div>' +
+    (H.host_bio ? '<p style="font-size:14.5px;margin-top:12px">' + FH.esc(H.host_bio) + '</p>' : '') + '</div>';
+}
+
 function render(){
   const root = document.getElementById('ls-root');
   const photos = H.photo_urls || [];
@@ -122,7 +131,8 @@ function render(){
     '<div class="gallery' + (photos.length === 1 ? ' one' : '') + '">' + photos.slice(0, 3).map((u, i) => '<img class="' + (i === 0 ? 'g-main' : '') + '" src="' + FH.esc(u) + '" alt="" loading="lazy">').join('') + '</div>';
   const isOwner = ME && H.owner_id === ME.id;
   let bookBox;
-  if(isOwner) bookBox = '<p class="muted">' + FH.esc(t('p.ls.ownListing')) + '</p>';
+  if(H.is_demo) bookBox = '<p class="muted">' + FH.esc(t('p.demo.nobook')) + '</p>';
+  else if(isOwner) bookBox = '<p class="muted">' + FH.esc(t('p.ls.ownListing')) + '</p>';
   else if(!H.owner_id) bookBox = '<p class="muted">' + FH.esc(t('p.ls.notBookable')) + '</p>';
   else if(H.status !== 'approved') bookBox = '<p class="muted">' + FH.esc(t('p.ls.unavailable')) + '</p>';
   else bookBox =
@@ -144,12 +154,14 @@ function render(){
     '<div class="form-head" style="margin-bottom:22px"><div class="eyebrow"><span class="dot"></span><span>' + FH.esc(H.circuit) + '</span></div>' +
     '<h1 class="headline" style="font-size:clamp(26px,3.6vw,38px); margin-top:16px;">' + FH.esc(H.title || (H.city + (H.country ? ', ' + H.country : ''))) + '</h1>' +
     '<p>' + FH.esc(H.city) + (H.country ? ', ' + FH.esc(H.country) : '') + ' · ' + FH.esc(t('p.ls.hostedBy')) + ' ' + FH.esc((H.name || '').split(' ')[0]) + '</p><div id="rating-line" style="margin-top:8px"></div></div>' +
+    (H.is_demo ? '<div class="demo-banner"><span class="demo-tag">' + FH.esc(t('p.demo.tag')) + '</span> ' + FH.esc(t('p.demo.banner')) + '</div>' : '') +
     gal +
     '<div class="ls-grid"><div>' +
       '<div class="panel"><h3>' + FH.esc(t('p.ls.about')) + '</h3><p style="white-space:pre-line;font-size:14.5px">' + FH.esc(H.description || '') + '</p>' +
         '<p class="muted" style="margin-top:12px">' + (H.capacity ? FH.esc(t('p.ls.capacity', { n: H.capacity })) : '') + (H.min_nights > 1 ? ' · ' + FH.esc(t('p.ls.minNights', { n: H.min_nights })) : '') + '</p></div>' +
       ((H.amenities || []).length ? '<div class="panel"><h3>' + FH.esc(t('p.ls.amenities')) + '</h3><div>' + FH.featureChips(H.amenities, FH.AMENITIES) + '</div></div>' : '') +
       (((H.rules || []).length || H.house_rules) ? '<div class="panel"><h3>' + FH.esc(t('p.ls.rules')) + '</h3><div>' + FH.featureChips(H.rules, FH.RULES) + '</div>' + (H.house_rules ? '<p style="white-space:pre-line;font-size:14.5px;margin-top:6px">' + FH.esc(H.house_rules) + '</p>' : '') + '</div>' : '') +
+      hostCard() +
       '<div class="panel"><div id="ls-map"></div></div>' +
       '<div class="panel"><h3>' + FH.esc(t('p.ls.reviews')) + '</h3><div id="reviews"></div></div>' +
     '</div><div><div class="panel book-box"><div class="price-big">' + FH.esc(FH.money(H.price_per_night || 0, H.currency)) + '<span class="muted" style="font-size:14px">' + FH.esc(t('p.ls.perNight')) + '</span></div>' + busyTxt + '<div style="margin-top:14px">' + bookBox + '</div></div></div></div>';
@@ -209,6 +221,7 @@ async function loadReviews(){
   const avg = list.reduce((s, r) => s + r.rating, 0) / list.length;
   window.__ratingHtml = FH.ratingBadge(avg, list.length);
   document.getElementById('rating-line').innerHTML = window.__ratingHtml;
+  window.__hostRatingTxt = '★ ' + avg.toFixed(1) + ' · ' + list.length + ' ' + t('p.host.reviews'); const hr = document.getElementById('host-rating'); if(hr) hr.textContent = window.__hostRatingTxt;
   const dist = [5, 4, 3, 2, 1].map(n => ({ n, c: list.filter(r => r.rating === n).length }));
   const stars = n => '★'.repeat(n) + '<span style="opacity:.25">' + '★'.repeat(5 - n) + '</span>';
   box.innerHTML =

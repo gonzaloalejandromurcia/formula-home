@@ -10,6 +10,15 @@ const FH = (function(){
   const sb = supabaseClient;
   const KNOWN = ['not_authenticated','listing_unavailable','own_listing','past_dates','bad_dates','too_long','min_nights','bad_guests','no_price','dates_blocked','dates_taken','duplicate_request','too_many_requests','forbidden','bad_state','not_found','not_accepted','not_completed','bad_rating','already_reviewed','bad_action','status_locked','not_paid','already_paid','pay_expired','no_listing','unknown_country'];
 
+  function demoOn(){
+    try{
+      const q = new URLSearchParams(location.search).get('demo');
+      if(q === '1') sessionStorage.setItem('fh_demo', '1');
+      if(q === '0') sessionStorage.removeItem('fh_demo');
+      return sessionStorage.getItem('fh_demo') === '1';
+    }catch(e){ return new URLSearchParams(location.search).get('demo') === '1'; }
+  }
+
   // Calls the "payments" Edge Function (Stripe). Returns { data, error }.
   async function pay(action, extra){
     const { data, error } = await sb.functions.invoke('payments', { body: Object.assign({ action }, extra || {}) });
@@ -165,7 +174,7 @@ const FH = (function(){
   }
 
   // columns safe to read publicly from listings (never contact data)
-  const LISTING_COLS = 'id, created_at, name, title, city, country, circuit, lat, lng, price_per_night, currency, capacity, description, house_rules, rules, amenities, min_nights, photo_urls, owner_id, status';
+  const LISTING_COLS = 'id, created_at, name, title, city, country, circuit, lat, lng, price_per_night, currency, capacity, description, house_rules, rules, amenities, min_nights, photo_urls, owner_id, status, is_demo, host_bio, host_langs, host_since, host_photo';
 
 
   // simple checkbox options for hosts (key, icon). Labels live in i18n as 'ft.<key>'
@@ -204,5 +213,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
+  return { demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
 })();

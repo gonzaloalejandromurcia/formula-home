@@ -241,7 +241,8 @@
       const { count, error } = await supabaseClient
         .from('hosts')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'approved');
+        .eq('status', 'approved')
+        .eq('is_demo', false);
       if(!error && count !== null){
         liveHostCount = count;
         renderLiveCount();
