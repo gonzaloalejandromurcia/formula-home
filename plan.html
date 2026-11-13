@@ -82,7 +82,7 @@
     .pkg-box{ border-color:#000; }
   }
   .stay-area{ border:none; border-radius:0; display:block; }
-  .stay-area .list-pane{ border-left:none; padding:0; max-height:none; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .stay-area .list-pane{ border-left:none; padding:0; max-height:none; display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
   .stay-area .empty-pane{ grid-column:1/-1; }
   .host-card .ph2{ height:150px; margin:-16px -16px 12px; background:#17171a center/cover no-repeat; border-radius:10px 10px 0 0; position:relative; }
   .host-card .ph2 .tag{ position:absolute; left:10px; top:10px; background:#f5c542; color:#111; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
@@ -169,6 +169,7 @@
 <script src="assets/i18n-platform.js"></script>
 <script src="assets/config.js"></script>
 <script src="assets/races.js"></script>
+<script src="assets/tracks.js"></script>
 <script src="assets/app.js"></script>
 <script>
   document.getElementById('burger').addEventListener('click', () => {
@@ -276,8 +277,11 @@
         <h2 class="headline" style="font-size:clamp(22px,3vw,30px);" data-i18n="plan.stayingTitleTemplate" data-i18n-vars='${vCircuit}'>Fan hosts near ${race.circuit}</h2>
         <p data-i18n="p.plan.staySub">Fan hosts close to the circuit. Open any listing on the map when one catches your eye, and add it to your package below.</p>
         <div class="stay-area">
-          <div class="list-pane" id="list-pane">
-            <div class="empty-pane"><div class="spinner"></div><span data-i18n="plan.loadingHosts">Loading hosts near the circuit...</span></div>
+          <div class="stay-layout ${FH.trackPanel(race.circuit) ? 'has-track' : ''}">
+            ${FH.trackPanel(race.circuit, t('p.track.circuit'))}
+            <div class="list-pane" id="list-pane">
+              <div class="empty-pane"><div class="spinner"></div><span data-i18n="plan.loadingHosts">Loading hosts near the circuit...</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -348,6 +352,7 @@
       </div>
     `;
     applyI18n();
+    FH.hydrateTracks(root);
 
     // ---------- map + hosts ----------
     function haversine(lat1, lng1, lat2, lng2){

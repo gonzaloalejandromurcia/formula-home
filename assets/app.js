@@ -43,6 +43,57 @@ const FH = (function(){
     }catch(e){ return new URLSearchParams(location.search).get('demo') !== '0'; }
   }
 
+  // Circuit outline (red on black, brand style). Needs assets/tracks.js. The outline is drawn from a Wikimedia Commons
+  // track map: we pick its main track path, then re-colour it. If the map can't be loaded the panel simply disappears.
+  const _trackCache = {};
+  function trackPanel(circuit, sub){
+    const file = (window.TRACK_FILES || {})[circuit];
+    if(!file) return '';
+    return '<aside class="track-panel" data-track="' + esc(circuit) + '"><div class="tp-svg"></div><div class="tp-txt"><span class="tp-k">' + esc(sub || 'Circuit') + '</span><b class="tp-n">' + esc(circuit) + '</b></div></aside>';
+  }
+  function _drawTrack(box, o){
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Circuit layout');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    const g = document.createElementNS(NS, 'g'); if(o.tf) g.setAttribute('transform', o.tf);
+    const p = document.createElementNS(NS, 'path'); p.setAttribute('d', o.d);
+    g.appendChild(p); svg.appendChild(g);
+    svg.style.cssText = 'position:absolute;left:-9999px;width:400px;height:400px';
+    document.body.appendChild(svg);
+    const b = svg.getBBox();
+    document.body.removeChild(svg);
+    const pad = Math.max(b.width, b.height) * 0.05;
+    svg.setAttribute('viewBox', [b.x - pad, b.y - pad, b.width + 2 * pad, b.height + 2 * pad].join(' '));
+    svg.removeAttribute('style');
+    box.innerHTML = ''; box.appendChild(svg);
+  }
+  async function _trackData(circuit){
+    if(_trackCache[circuit]) return _trackCache[circuit];
+    const file = (window.TRACK_FILES || {})[circuit];
+    const r = await fetch('https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(file));
+    if(!r.ok) throw new Error('track ' + r.status);
+    const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+    const ps = [].slice.call(doc.querySelectorAll('path'));
+    let pick = ps.find(x => /141414/i.test((x.getAttribute('stroke') || '') + (x.getAttribute('style') || '')));
+    if(!pick){
+      pick = ps.filter(x => !/font-size|aria-label/.test((x.getAttribute('style') || '') + (x.getAttribute('aria-label') || '')))
+        .sort((a, b) => b.getAttribute('d').length - a.getAttribute('d').length)[0];
+    }
+    if(!pick) throw new Error('no path');
+    const tfs = []; let e = pick;
+    while(e && e.tagName && e.tagName !== 'svg'){ if(e.getAttribute && e.getAttribute('transform')) tfs.unshift(e.getAttribute('transform')); e = e.parentNode; }
+    return (_trackCache[circuit] = { d: pick.getAttribute('d'), tf: tfs.join(' ') });
+  }
+  // Fill every .track-panel under root; removes the panel (and the two-column layout) if its map fails to load.
+  function hydrateTracks(root){
+    [].slice.call((root || document).querySelectorAll('.track-panel[data-track]')).forEach(el => {
+      _trackData(el.dataset.track).then(o => _drawTrack(el.querySelector('.tp-svg'), o)).catch(() => {
+        const lay = el.closest('.stay-layout'); el.remove(); if(lay) lay.classList.remove('has-track');
+      });
+    });
+  }
+
   // Calls the "payments" Edge Function (Stripe). Returns { data, error }.
   async function pay(action, extra){
     const { data, error } = await sb.functions.invoke('payments', { body: Object.assign({ action }, extra || {}) });
@@ -237,5 +288,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { showMap, circuitOf, demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
+  return { trackPanel, hydrateTracks, showMap, circuitOf, demoOn, pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
 })();

@@ -348,3 +348,21 @@ footer{ padding:44px 0 30px; }
 .map-canvas{height:min(480px,62vh);background:#111}
 .map-close{position:absolute;right:10px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line-strong);background:#000;color:#fff;font-size:22px;line-height:1;cursor:pointer;z-index:2}
 .map-close:hover{border-color:var(--red)}
+
+/* circuit outline panel + stays layout */
+.stay-layout{ display:grid; grid-template-columns:1fr; gap:24px; align-items:start; }
+.stay-layout.has-track{ grid-template-columns:minmax(260px,340px) minmax(0,1fr); }
+.track-panel{ position:sticky; top:96px; background:#000; border:1px solid var(--line-strong); border-radius:12px; padding:20px; text-align:center; }
+.track-panel svg{ width:100%; height:auto; max-height:300px; display:block; margin:0 auto; overflow:visible; }
+.track-panel path{ fill:none; stroke:var(--red); stroke-width:3.5; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; filter:drop-shadow(0 0 5px rgba(227,21,31,.55)); }
+.track-panel .tp-txt{ margin-top:14px; display:flex; flex-direction:column; gap:4px; }
+.track-panel .tp-k{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--steel); }
+.track-panel .tp-n{ font-family:'Oswald',sans-serif; font-style:italic; text-transform:uppercase; font-size:20px; line-height:1.15; color:#fff; }
+@media(max-width:899px){
+  .stay-layout.has-track{ grid-template-columns:1fr; gap:16px; }
+  .track-panel{ position:static; display:flex; align-items:center; gap:16px; padding:12px 16px; text-align:left; }
+  .track-panel .tp-svg{ width:44%; max-width:190px; flex:none; }
+  .track-panel svg{ width:100%; max-height:120px; margin:0; }
+  .track-panel .tp-txt{ margin:0; }
+  .track-panel .tp-n{ font-size:17px; }
+}

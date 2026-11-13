@@ -51,7 +51,7 @@
   .leaflet-popup-content-wrapper{ background:#0a0a0a; color:#fff; border-radius:8px; }
   .leaflet-popup-tip{ background:#0a0a0a; }
   .popup-content b{ font-family:'Oswald',sans-serif; font-style:italic; }
-  .stay-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+  .stay-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
   .stay-grid .empty-pane, .stay-grid .loading-pane{ grid-column:1/-1; }
   .stay-grid .host-card{ flex-direction:column; }
   .stay-grid .host-card .ph{ flex:none; height:210px; min-height:0; }
@@ -142,8 +142,11 @@
     </div>
   </div>
 
-  <div class="stay-grid" id="list-pane">
-    <div class="loading-pane"><div class="spinner"></div><span data-i18n="search.loadingResultsMap">Loading results and map...</span></div>
+  <div class="stay-layout" id="stay-layout">
+    <div id="track-slot" style="display:contents"></div>
+    <div class="stay-grid" id="list-pane">
+      <div class="loading-pane"><div class="spinner"></div><span data-i18n="search.loadingResultsMap">Loading results and map...</span></div>
+    </div>
   </div>
 </main>
 
@@ -159,6 +162,7 @@
 <script src="assets/i18n-platform.js"></script>
 <script src="assets/config.js"></script>
 <script src="assets/races.js"></script>
+<script src="assets/tracks.js"></script>
 <script src="assets/app.js"></script>
 <script>
   document.getElementById('burger').addEventListener('click', () => {
@@ -243,6 +247,10 @@
     if(sort === 'price-desc') filtered.sort((a,b) => b.price_per_night - a.price_per_night);
     if(sort === 'rating') filtered.sort((a,b) => ((b.avg || 0) - (a.avg || 0)) || ((b.n || 0) - (a.n || 0)));
     if(sort === 'newest') filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    const tp = circuit ? FH.trackPanel(circuit, t('p.track.circuit')) : '';
+    document.getElementById('track-slot').innerHTML = tp;
+    FH.hydrateTracks(document.getElementById('track-slot'));
+    document.getElementById('stay-layout').classList.toggle('has-track', !!tp);
     renderList(filtered);
   }
   function onCurrencyChange(){ applyFiltersAndRender(); }
