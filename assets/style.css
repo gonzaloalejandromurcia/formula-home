@@ -366,3 +366,5 @@ footer{ padding:44px 0 30px; }
   .track-panel .tp-txt{ margin:0; }
   .track-panel .tp-n{ font-size:17px; }
 }
+.track-panel .tp-c{ font-size:10px; color:var(--steel); opacity:.7; text-decoration:none; margin-top:2px; }
+.track-panel .tp-c:hover{ opacity:1; text-decoration:underline; }

@@ -49,7 +49,7 @@ const FH = (function(){
   function trackPanel(circuit, sub){
     const file = (window.TRACK_FILES || {})[circuit];
     if(!file) return '';
-    return '<aside class="track-panel" data-track="' + esc(circuit) + '"><div class="tp-svg"></div><div class="tp-txt"><span class="tp-k">' + esc(sub || 'Circuit') + '</span><b class="tp-n">' + esc(circuit) + '</b></div></aside>';
+    return '<aside class="track-panel" data-track="' + esc(circuit) + '"><div class="tp-svg"></div><div class="tp-txt"><span class="tp-k">' + esc(sub || 'Circuit') + '</span><b class="tp-n">' + esc(circuit) + '</b><a class="tp-c" href="https://commons.wikimedia.org/wiki/Category:Formula_One_circuit_maps" target="_blank" rel="noopener">Wikimedia Commons</a></div></aside>';
   }
   function _drawTrack(box, o){
     const NS = 'http://www.w3.org/2000/svg';
