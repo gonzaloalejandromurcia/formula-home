@@ -1,7 +1,20 @@
 // Formula Home — shared platform helpers (auth state, nav, messages thread, formatting)
 const FH = (function(){
   const sb = supabaseClient;
-  const KNOWN = ['not_authenticated','listing_unavailable','own_listing','past_dates','bad_dates','too_long','min_nights','bad_guests','no_price','dates_blocked','dates_taken','duplicate_request','too_many_requests','forbidden','bad_state','not_found','not_accepted','not_completed','bad_rating','already_reviewed','bad_action','status_locked'];
+  const KNOWN = ['not_authenticated','listing_unavailable','own_listing','past_dates','bad_dates','too_long','min_nights','bad_guests','no_price','dates_blocked','dates_taken','duplicate_request','too_many_requests','forbidden','bad_state','not_found','not_accepted','not_completed','bad_rating','already_reviewed','bad_action','status_locked','not_paid','already_paid','pay_expired','no_listing','unknown_country'];
+
+  // Calls the "payments" Edge Function (Stripe). Returns { data, error }.
+  async function pay(action, extra){
+    const { data, error } = await sb.functions.invoke('payments', { body: Object.assign({ action }, extra || {}) });
+    if(error){
+      let msg = error.message;
+      try { const j = await error.context.json(); if(j && j.error) msg = j.error; } catch(e){}
+      return { data: null, error: { message: msg } };
+    }
+    return { data, error: null };
+  }
+  function payBadge(ps){ return '<span class="badge b-pay-' + esc(ps) + '">' + esc(t('pay.st.' + ps)) + '</span>'; }
+  function testBanner(){ return '<div class="test-banner">' + esc(t('pay.testBanner')) + '</div>'; }
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function errText(e){
@@ -184,5 +197,5 @@ const FH = (function(){
   }
   function safeNext(n){ return /^[a-z0-9_\-]+\.html(\?[a-z0-9_=&\-%.]*)?$/i.test(n || '') ? n : 'account.html'; }
 
-  return { initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
+  return { pay, payBadge, testBanner, initNav, contactHtml, safeNext, sb, esc, errText, user, profile, requireAuth, today, parseD, fmtD, nightsBetween, money, toast, badge, wire, thread, resizeImage, LISTING_COLS, RULES, AMENITIES, featureChips, ratingBadge, ratingMap, ratingKey };
 })();

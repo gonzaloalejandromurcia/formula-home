@@ -134,13 +134,24 @@ window.onLangChange = () => { renderTrips(); };
     FH.toast(document.getElementById('profile-msg'), error ? FH.errText(error) : t('p.acc.saved'), !error);
   });
   document.getElementById('logout-btn').addEventListener('click', async () => { await sb.auth.signOut(); location.href = 'index.html'; });
-  await loadTrips();
+  // back from Stripe Checkout
+  const qs = new URLSearchParams(location.search);
+  const paidId = qs.get('paid');
+  if(paidId){
+    const r = await FH.pay('confirm', { booking_id: paidId });
+    history.replaceState(null, '', 'account.html#trips');
+    await loadTrips();
+    const item = document.querySelector('#trips .item[data-id="' + paidId + '"] .status-msg');
+    FH.toast(item, r.data && r.data.paid ? t('pay.confirmed') : t('pay.notYet'), !!(r.data && r.data.paid));
+  } else {
+    await loadTrips();
+  }
   if(location.hash === '#trips') document.getElementById('trips-panel').scrollIntoView();
 })();
 
 async function loadTrips(){
   const { data, error } = await sb.from('bookings')
-    .select('id, host_id, check_in, check_out, nights, guests, message, total, currency, status, created_at, hosts(title, city, country, circuit, name)')
+    .select('id, host_id, check_in, check_out, nights, guests, message, total, amount_due, currency, status, payment_status, pay_by, created_at, hosts(title, city, country, circuit, name)')
     .eq('guest_id', ME.id).order('check_in', { ascending: false });
   const box = document.getElementById('trips');
   if(error){ box.textContent = FH.errText(error); return; }
@@ -163,17 +174,23 @@ function renderTrips(){
     const canCancel = (b.status === 'requested' || b.status === 'accepted') && b.check_in >= today;
     const canReview = b.status === 'accepted' && b.check_out <= today && !REVIEWED.has(b.id);
     const canChat = (b.status === 'requested' || b.status === 'accepted');
+    const paid = b.payment_status === 'paid';
+    const canPay = b.status === 'accepted' && !paid && (!b.pay_by || new Date(b.pay_by) > new Date());
+    const payInfo = b.status !== 'accepted' ? '' :
+      (paid ? '<div class="sub" style="margin-top:8px">' + FH.esc(t('pay.paidNote')) + '</div>'
+            : '<div class="sub" style="margin-top:8px">' + FH.esc(t('pay.payBy', { d: b.pay_by ? new Date(b.pay_by).toLocaleString() : '' })) + '</div>' + FH.testBanner());
     return '<div class="item" data-id="' + b.id + '">' +
       '<div class="item-top"><div>' +
         '<h4>' + (h ? '<a href="listing.html?id=' + b.host_id + '" style="text-decoration:underline">' + FH.esc(title) + '</a>' : FH.esc(title)) + '</h4>' +
         '<div class="sub">' + FH.esc(FH.fmtD(b.check_in)) + ' → ' + FH.esc(FH.fmtD(b.check_out)) + ' · ' + b.nights + ' ' + FH.esc(t('p.acc.nights')) + ' · ' + b.guests + ' ' + FH.esc(t('p.acc.guests')) + '</div>' +
-        '<div class="sub">' + FH.esc(t('p.acc.total')) + ': <b>' + FH.esc(FH.money(b.total, b.currency)) + '</b></div>' +
-      '</div>' + FH.badge(b.status) + '</div>' +
+        '<div class="sub">' + FH.esc(t('p.acc.total')) + ': <b>' + FH.esc(FH.money(b.amount_due || b.total, b.currency)) + '</b></div>' +
+      '</div><div class="badges">' + FH.badge(b.status) + (b.status === 'accepted' || b.payment_status === 'refunded' ? FH.payBadge(b.payment_status) : '') + '</div></div>' +
       (b.message ? '<div class="msg">' + FH.esc(b.message) + '</div>' : '') +
-      (b.status === 'accepted' ? '<div class="sub" style="margin-top:8px">' + FH.esc(t('p.acc.payNote')) + '</div>' : '') +
+      payInfo +
       '<div class="contact-box" hidden></div>' +
       '<div class="btn-row">' +
-        (b.status === 'accepted' ? '<button class="btn btn-ghost btn-small" data-act="contact">' + FH.esc(t('p.acc.contact')) + '</button>' : '') +
+        (canPay ? '<button class="btn btn-small" data-act="pay">' + FH.esc(t('pay.payNow')) + '</button>' : '') +
+        (b.status === 'accepted' && paid ? '<button class="btn btn-ghost btn-small" data-act="contact">' + FH.esc(t('p.acc.contact')) + '</button>' : '') +
         (canChat ? '<button class="btn btn-ghost btn-small" data-act="msgs">' + FH.esc(t('p.acc.messages')) + '</button>' : '') +
         (canReview ? '<button class="btn btn-ghost btn-small" data-act="review">' + FH.esc(t('p.acc.review')) + '</button>' : '') +
         (canCancel ? '<button class="btn btn-danger btn-small" data-act="cancel">' + FH.esc(t('p.acc.cancel')) + '</button>' : '') +
@@ -185,7 +202,12 @@ function renderTrips(){
 document.getElementById('trips').addEventListener('click', async (e) => {
   const b = e.target.closest('button[data-act]'); if(!b) return;
   const item = b.closest('.item'), id = item.dataset.id, st = item.querySelector('.status-msg'), act = b.dataset.act;
-  if(act === 'cancel'){
+  if(act === 'pay'){
+    b.disabled = true; FH.toast(st, t('pay.redirecting'), true);
+    const r = await FH.pay('checkout', { booking_id: id });
+    if(r.error || !r.data || !r.data.url){ b.disabled = false; FH.toast(st, FH.errText(r.error || 'error'), false); return; }
+    location.href = r.data.url;
+  } else if(act === 'cancel'){
     if(!confirm(t('p.acc.cancelConfirm'))) return;
     const { error } = await sb.rpc('cancel_booking', { p_booking: id });
     if(error){ FH.toast(st, FH.errText(error), false); return; }

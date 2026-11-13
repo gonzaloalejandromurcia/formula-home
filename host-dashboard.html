@@ -79,6 +79,10 @@
     <div class="eyebrow"><span class="dot"></span><span data-i18n="p.hp.title">Host panel</span></div>
     <h1 class="headline" style="font-size:clamp(28px,4vw,42px); margin-top:18px;" data-i18n="p.hp.title">Host panel</h1>
   </div>
+  <div class="panel" id="payouts-panel" hidden>
+    <div class="panel-head"><h3 data-i18n="pay.payoutsTitle">Payouts</h3></div>
+    <div id="payouts"></div>
+  </div>
   <div class="panel">
     <div class="panel-head"><h3 data-i18n="p.hp.requests">Booking requests</h3><span class="muted" id="req-count"></span></div>
     <div id="requests"></div>
@@ -106,13 +110,46 @@
 
 FH.wire();
 const sb = FH.sb;
-let ME = null, LISTINGS = [], BOOKINGS = [];
-window.onLangChange = () => { renderRequests(); renderListings(); };
+let ME = null, LISTINGS = [], BOOKINGS = [], PAYOUT = null;
+window.onLangChange = () => { renderRequests(); renderListings(); renderPayouts(); };
 
 (async () => {
   ME = await FH.requireAuth(); if(!ME) return;
   await loadAll();
+  await loadPayouts();
 })();
+
+async function loadPayouts(){
+  if(!LISTINGS.length){ document.getElementById('payouts-panel').hidden = true; return; }
+  const qs = new URLSearchParams(location.search);
+  if(qs.get('stripe')){
+    history.replaceState(null, '', 'host-dashboard.html');
+    const r = await FH.pay('account_status');
+    PAYOUT = r.data || null;
+  }
+  if(!PAYOUT){
+    const { data } = await sb.rpc('my_payout_status');
+    PAYOUT = data || { has_account: false, payouts_enabled: false };
+  }
+  renderPayouts();
+}
+
+function renderPayouts(){
+  const panel = document.getElementById('payouts-panel'), box = document.getElementById('payouts');
+  if(!panel || !PAYOUT) return;
+  panel.hidden = false;
+  const s = PAYOUT.payouts_enabled ? 'ready' : (PAYOUT.has_account ? 'incomplete' : 'none');
+  const txt = { ready: 'pay.payoutsReady', incomplete: 'pay.payoutsIncomplete', none: 'pay.payoutsNone' }[s];
+  const btn = { ready: 'pay.update', incomplete: 'pay.continue', none: 'pay.setup' }[s];
+  box.innerHTML = '<p class="muted" style="margin-bottom:10px">' + FH.esc(t(txt)) + '</p>' + FH.testBanner() +
+    '<div class="btn-row"><button class="btn btn-small' + (s === 'ready' ? ' btn-ghost' : '') + '" id="payout-btn">' + FH.esc(t(btn)) + '</button></div><div class="status-msg" id="payout-msg"></div>';
+  document.getElementById('payout-btn').addEventListener('click', async (e) => {
+    e.target.disabled = true; FH.toast(document.getElementById('payout-msg'), t('pay.redirecting'), true);
+    const r = await FH.pay('onboard');
+    if(r.error || !r.data || !r.data.url){ e.target.disabled = false; FH.toast(document.getElementById('payout-msg'), FH.errText(r.error || 'error'), false); return; }
+    location.href = r.data.url;
+  });
+}
 
 async function loadAll(){
   const l = await sb.from('hosts').select(FH.LISTING_COLS).eq('owner_id', ME.id).order('created_at', { ascending: false });
@@ -121,7 +158,7 @@ async function loadAll(){
   const ids = LISTINGS.map(x => x.id);
   if(ids.length){
     const b = await sb.from('bookings')
-      .select('id, host_id, guest_name, check_in, check_out, nights, guests, message, total, currency, status, created_at')
+      .select('id, host_id, guest_name, check_in, check_out, nights, guests, message, total, host_payout, currency, status, payment_status, payout_status, created_at')
       .in('host_id', ids).order('check_in', { ascending: true });
     BOOKINGS = b.data || [];
   } else BOOKINGS = [];
@@ -140,18 +177,23 @@ function renderRequests(){
   const today = FH.today();
   box.innerHTML = list.map(b => {
     const canCancel = b.status === 'accepted' && b.check_in >= today;
+    const paid = b.payment_status === 'paid';
+    const payInfo = b.status !== 'accepted' ? '' : '<div class="sub" style="margin-top:8px">' + FH.esc(
+      b.payout_status === 'paid' ? t('pay.hostPaidOut') :
+      paid ? t('pay.hostPaid', { a: FH.money(b.host_payout || b.total, b.currency) }) : t('pay.hostWaiting')) + '</div>';
     return '<div class="item" data-id="' + b.id + '">' +
       '<div class="item-top"><div>' +
         '<h4>' + FH.esc(b.guest_name) + '</h4>' +
         '<div class="sub">' + FH.esc(listingName(b.host_id)) + '</div>' +
         '<div class="sub">' + FH.esc(FH.fmtD(b.check_in)) + ' → ' + FH.esc(FH.fmtD(b.check_out)) + ' · ' + b.nights + ' ' + FH.esc(t('p.acc.nights')) + ' · ' + b.guests + ' ' + FH.esc(t('p.acc.guests')) + '</div>' +
         '<div class="sub">' + FH.esc(t('p.acc.total')) + ': <b>' + FH.esc(FH.money(b.total, b.currency)) + '</b></div>' +
-      '</div>' + FH.badge(b.status) + '</div>' +
+      '</div><div class="badges">' + FH.badge(b.status) + (b.status === 'accepted' || b.payment_status === 'refunded' ? FH.payBadge(b.payment_status) : '') + '</div></div>' +
       (b.message ? '<div class="msg">' + FH.esc(b.message) + '</div>' : '') +
+      payInfo +
       '<div class="contact-box" hidden></div>' +
       '<div class="btn-row">' +
         (b.status === 'requested' && b.check_in >= today ? '<button class="btn btn-small" data-act="accept">' + FH.esc(t('p.hp.accept')) + '</button><button class="btn btn-danger btn-small" data-act="decline">' + FH.esc(t('p.hp.decline')) + '</button>' : '') +
-        (b.status === 'accepted' ? '<button class="btn btn-ghost btn-small" data-act="contact">' + FH.esc(t('p.hp.guestContact')) + '</button>' : '') +
+        (b.status === 'accepted' && paid ? '<button class="btn btn-ghost btn-small" data-act="contact">' + FH.esc(t('p.hp.guestContact')) + '</button>' : '') +
         ((b.status === 'requested' || b.status === 'accepted') ? '<button class="btn btn-ghost btn-small" data-act="msgs">' + FH.esc(t('p.acc.messages')) + '</button>' : '') +
         (canCancel ? '<button class="btn btn-danger btn-small" data-act="cancel">' + FH.esc(t('p.hp.cancelBooking')) + '</button>' : '') +
       '</div><div class="thread-box" hidden></div><div class="status-msg"></div></div>';
